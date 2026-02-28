@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Movie booking app inspired by BookMyShow with animated text, cover art, food items page, fake bill receipt, and seat selection. User has requested admin access/role.",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-add-an-admin-self-promotion-ui-flow-when-a-logged-in-internet-identity-user-visits-the-admin-page-and-is-not-yet-an-admin-display-a-claim-admin-access-button-that-calls-the-backend-to-grant-them-admin-privileges-only-succeeds-if-no-admin-exists-yet-or-they-are-already-an-admin-after-a-successful-claim-refresh-the-admin-status-and-grant-access-to-the-adminpanel",
+      "title": "Add an admin self-promotion UI flow: when a logged-in Internet Identity user visits the Admin page and is not yet an admin, display a 'Claim Admin Access' button that calls the backend to grant them admin privileges (only succeeds if no admin exists yet or they are already an admin). After a successful claim, refresh the admin status and grant access to the AdminPanel.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Add admin role/access for the user",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add a backend function that allows a bootstrapped super-admin principal (hardcoded or set on first call when no admin exists) to grant the admin role to a given principal. On canister initialization, automatically assign the admin role to the deployer's principal so the first user can self-promote.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "D.K Home Theatre",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

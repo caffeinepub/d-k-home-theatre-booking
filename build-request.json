@@ -1,0 +1,59 @@
+{
+  "kind": "build_request",
+  "title": "Grant admin role to current user",
+  "projectName": "D.K Home Theatre",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Add a backend function that allows a bootstrapped super-admin principal (hardcoded or set on first call when no admin exists) to grant the admin role to a given principal. On canister initialization, automatically assign the admin role to the deployer's principal so the first user can self-promote.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "Make me admin of this"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'setAdmin' or equivalent function exists that can assign admin role to a principal",
+        "On first deploy (no existing admins), the canister deployer principal is automatically set as admin",
+        "Calling 'isAdmin' with the deployer's principal returns true after initialization"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Add an admin self-promotion UI flow: when a logged-in Internet Identity user visits the Admin page and is not yet an admin, display a 'Claim Admin Access' button that calls the backend to grant them admin privileges (only succeeds if no admin exists yet or they are already an admin). After a successful claim, refresh the admin status and grant access to the AdminPanel.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "Make me admin of this"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A 'Claim Admin Access' button is shown to authenticated users who are not yet admins on the Admin page",
+        "Clicking the button calls the backend grant-admin function",
+        "On success, the user is immediately granted access to the AdminPanel without a page reload",
+        "If the claim fails (e.g., admin slot already taken), an informative error toast is shown",
+        "AdminGuard correctly reflects the new admin status after claiming"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files under frontend/src/components/ui",
+    "Keep all Motoko logic in backend/main.mo (single-actor architecture)"
+  ],
+  "nonGoals": [
+    "Multi-admin management UI (add/remove multiple admins)",
+    "Role-based permission tiers beyond the existing admin/user distinction",
+    "Any changes to the booking flow or other existing features"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

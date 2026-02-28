@@ -1,0 +1,30 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Grant admin role to current user",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Add an admin self-promotion UI flow allowing authenticated users to claim admin access when no admin exists yet",
+      "acceptanceCriteria": [
+        "A 'Claim Admin Access' button is shown to authenticated users who are not yet admins on the Admin page",
+        "Clicking the button calls the backend grant-admin function",
+        "On success, the user is immediately granted access to the AdminPanel without a page reload",
+        "If the claim fails (e.g., admin slot already taken), an informative error toast is shown",
+        "AdminGuard correctly reflects the new admin status after claiming"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a React Query mutation hook useGrantAdminRole that wraps the backend grantAdminRole function. The mutation should accept a Principal parameter and call actor.grantAdminRole(candidate). On success, invalidate the 'isCallerAdmin' and 'callerUserRole' query keys to trigger a refresh of the admin status throughout the app."
+        },
+        {
+          "path": "frontend/src/components/admin/AdminGuard.tsx",
+          "operation": "modify",
+          "description": "Extend AdminGuard to display a 'Claim Admin Access' button when the user is authenticated but isAdmin returns false. Use the authorization component's pattern for self-promotion: render a centered card with explanatory text ('No admin exists yet. Claim admin access to manage this application.') and a primary button. On button click, invoke the useGrantAdminRole mutation with the current user's principal. Show a loading state while the mutation is pending. On success, the invalidated queries will automatically re-fetch and grant access to children. On error, display a toast with the error message (e.g., 'Admin access already claimed by another user')."
+        }
+      ]
+    }
+  ]
+}

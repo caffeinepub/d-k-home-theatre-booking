@@ -1,0 +1,25 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-an-admin-self-promotion-ui-flow-when-a-logged-in-internet-identity-user-visits-the-admin-page-and-is-not-yet-an-admin-display-a-claim-admin-access-button-that-calls-the-backend-to-grant-them-admin-privileges-only-succeeds-if-no-admin-exists-yet-or-they-are-already-an-admin-after-a-successful-claim-refresh-the-admin-status-and-grant-access-to-the-adminpanel",
+      "featureTitle": "Add an admin self-promotion UI flow: when a logged-in Internet Identity user visits the Admin page and is not yet an admin, display a 'Claim Admin Access' button that calls the backend to grant them admin privileges (only succeeds if no admin exists yet or they are already an admin). After a successful claim, refresh the admin status and grant access to the AdminPanel.",
+      "files": [
+        "frontend/src/components/admin/AdminGuard.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

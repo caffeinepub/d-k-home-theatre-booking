@@ -1,0 +1,356 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&family=Fredoka+One&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Cinematic dark theme */
+    --background: 0.1 0 0;
+    --foreground: 0.95 0.02 85;
+
+    --card: 0.14 0 0;
+    --card-foreground: 0.95 0.02 85;
+
+    --popover: 0.16 0 0;
+    --popover-foreground: 0.95 0.02 85;
+
+    /* Gold primary */
+    --primary: 0.78 0.12 85;
+    --primary-foreground: 0.1 0 0;
+
+    /* Dark secondary */
+    --secondary: 0.18 0 0;
+    --secondary-foreground: 0.85 0.02 85;
+
+    /* Muted */
+    --muted: 0.2 0 0;
+    --muted-foreground: 0.55 0.01 85;
+
+    /* Gold accent */
+    --accent: 0.72 0.14 85;
+    --accent-foreground: 0.1 0 0;
+
+    /* Red destructive */
+    --destructive: 0.52 0.22 25;
+    --destructive-foreground: 0.95 0 0;
+
+    --border: 0.25 0.02 85;
+    --input: 0.22 0.02 85;
+    --ring: 0.78 0.12 85;
+
+    --chart-1: 0.78 0.12 85;
+    --chart-2: 0.52 0.22 25;
+    --chart-3: 0.55 0.01 85;
+    --chart-4: 0.65 0.15 150;
+    --chart-5: 0.45 0.18 270;
+
+    --sidebar: 0.12 0 0;
+    --sidebar-foreground: 0.95 0.02 85;
+    --sidebar-primary: 0.78 0.12 85;
+    --sidebar-primary-foreground: 0.1 0 0;
+    --sidebar-accent: 0.18 0 0;
+    --sidebar-accent-foreground: 0.85 0.02 85;
+    --sidebar-border: 0.25 0.02 85;
+    --sidebar-ring: 0.78 0.12 85;
+
+    /* Theatre-specific tokens */
+    --theatre-gold: 0.78 0.12 85;
+    --theatre-gold-dim: 0.65 0.1 85;
+    --theatre-red: 0.45 0.22 25;
+    --theatre-dark: 0.08 0 0;
+    --theatre-surface: 0.14 0 0;
+    --theatre-grey: 0.38 0 0;
+
+    /* Candy colors for animated background */
+    --candy-pink: oklch(0.72 0.28 350);
+    --candy-lime: oklch(0.82 0.25 140);
+    --candy-orange: oklch(0.75 0.22 55);
+    --candy-cyan: oklch(0.78 0.18 200);
+    --candy-yellow: oklch(0.88 0.22 95);
+    --candy-purple: oklch(0.65 0.25 300);
+    --candy-red: oklch(0.65 0.25 25);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'Playfair Display', serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-candy {
+    font-family: 'Fredoka One', 'Playfair Display', serif;
+  }
+
+  .text-gold {
+    color: oklch(var(--theatre-gold));
+  }
+
+  .text-gold-dim {
+    color: oklch(var(--theatre-gold-dim));
+  }
+
+  .bg-theatre-dark {
+    background-color: oklch(var(--theatre-dark));
+  }
+
+  .bg-theatre-surface {
+    background-color: oklch(var(--theatre-surface));
+  }
+
+  .border-gold {
+    border-color: oklch(var(--theatre-gold));
+  }
+
+  .border-gold-dim {
+    border-color: oklch(var(--theatre-gold-dim) / 0.4);
+  }
+
+  .seat-available {
+    background-color: oklch(0.35 0.18 145 / 0.25);
+    border-color: oklch(0.65 0.22 145);
+    color: oklch(0.85 0.2 145);
+  }
+
+  .seat-available:hover {
+    background-color: oklch(0.55 0.22 145 / 0.45);
+    box-shadow: 0 0 8px oklch(0.65 0.22 145 / 0.6);
+  }
+
+  .seat-selected {
+    background-color: oklch(var(--theatre-gold));
+    border-color: oklch(var(--theatre-gold));
+    color: oklch(0.1 0 0);
+    box-shadow: 0 0 10px oklch(var(--theatre-gold) / 0.7);
+  }
+
+  .seat-reserved {
+    background-color: oklch(var(--theatre-grey) / 0.3);
+    border-color: oklch(var(--theatre-grey));
+    color: oklch(var(--theatre-grey));
+    cursor: not-allowed;
+  }
+
+  .seat-booked {
+    background-color: oklch(var(--theatre-red) / 0.3);
+    border-color: oklch(var(--theatre-red));
+    color: oklch(var(--theatre-red));
+    cursor: not-allowed;
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, oklch(0.78 0.12 85), oklch(0.65 0.1 75));
+  }
+
+  .theatre-card {
+    background-color: oklch(var(--theatre-surface));
+    border: 1px solid oklch(var(--theatre-gold-dim) / 0.3);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px oklch(var(--theatre-gold) / 0.2);
+  }
+
+  /* Neon glow effects for cards */
+  .neon-border-cyan {
+    box-shadow: 0 0 15px oklch(0.78 0.18 200 / 0.5), inset 0 0 15px oklch(0.78 0.18 200 / 0.05);
+    border-color: oklch(0.78 0.18 200 / 0.7);
+  }
+
+  .neon-border-gold {
+    box-shadow: 0 0 20px oklch(0.78 0.12 85 / 0.5), inset 0 0 20px oklch(0.78 0.12 85 / 0.05);
+    border-color: oklch(0.78 0.12 85 / 0.8);
+  }
+
+  .neon-border-pink {
+    box-shadow: 0 0 15px oklch(0.72 0.28 350 / 0.5), inset 0 0 15px oklch(0.72 0.28 350 / 0.05);
+    border-color: oklch(0.72 0.28 350 / 0.7);
+  }
+
+  /* Receipt styles */
+  .receipt-paper {
+    background: #fff;
+    color: #1a1a1a;
+    font-family: 'Courier New', 'Courier', monospace;
+  }
+
+  .receipt-dashed {
+    border-top: 2px dashed #999;
+  }
+
+  /* Cinema hall background */
+  .cinema-hall-bg {
+    background: radial-gradient(ellipse at 50% 0%, oklch(0.18 0.04 250 / 0.6) 0%, oklch(0.06 0 0) 70%);
+  }
+}
+
+/* ============================================================
+   ANIMATED BACKGROUND LETTERS — Candy / Childish
+   ============================================================ */
+
+@keyframes candy-float {
+  0%   { transform: translateY(0px) rotate(0deg) scale(1); }
+  25%  { transform: translateY(-18px) rotate(8deg) scale(1.1); }
+  50%  { transform: translateY(-8px) rotate(-5deg) scale(0.95); }
+  75%  { transform: translateY(-22px) rotate(12deg) scale(1.08); }
+  100% { transform: translateY(0px) rotate(0deg) scale(1); }
+}
+
+@keyframes candy-spin-bounce {
+  0%   { transform: translateY(0) rotate(0deg) scale(1); }
+  20%  { transform: translateY(-25px) rotate(180deg) scale(1.2); }
+  40%  { transform: translateY(-10px) rotate(200deg) scale(0.9); }
+  60%  { transform: translateY(-30px) rotate(340deg) scale(1.15); }
+  80%  { transform: translateY(-5px) rotate(355deg) scale(1.05); }
+  100% { transform: translateY(0) rotate(360deg) scale(1); }
+}
+
+@keyframes candy-wobble {
+  0%   { transform: rotate(0deg) scale(1); }
+  15%  { transform: rotate(-10deg) scale(1.1); }
+  30%  { transform: rotate(10deg) scale(0.95); }
+  45%  { transform: rotate(-8deg) scale(1.08); }
+  60%  { transform: rotate(8deg) scale(0.97); }
+  75%  { transform: rotate(-5deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+
+@keyframes candy-pulse-color {
+  0%   { opacity: 0.55; filter: hue-rotate(0deg) brightness(1); }
+  25%  { opacity: 0.8; filter: hue-rotate(30deg) brightness(1.3); }
+  50%  { opacity: 0.6; filter: hue-rotate(60deg) brightness(1.1); }
+  75%  { opacity: 0.85; filter: hue-rotate(90deg) brightness(1.4); }
+  100% { opacity: 0.55; filter: hue-rotate(0deg) brightness(1); }
+}
+
+@keyframes candy-jump {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  10%       { transform: translateY(-30px) scaleY(1.1); }
+  20%       { transform: translateY(0) scaleY(0.9); }
+  30%       { transform: translateY(-15px) scaleY(1.05); }
+  40%       { transform: translateY(0) scaleY(1); }
+}
+
+@keyframes candy-drift {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  33%  { transform: translate(12px, -20px) rotate(15deg); }
+  66%  { transform: translate(-8px, -35px) rotate(-10deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.candy-letter {
+  position: absolute;
+  font-family: 'Fredoka One', 'Arial Black', sans-serif;
+  font-weight: 900;
+  user-select: none;
+  pointer-events: none;
+  line-height: 1;
+  text-shadow: 0 0 20px currentColor, 0 2px 4px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   SCREENING CARD HOVER EFFECTS
+   ============================================================ */
+
+@keyframes card-glow-pulse {
+  0%, 100% { box-shadow: 0 0 15px oklch(0.78 0.12 85 / 0.3); }
+  50%       { box-shadow: 0 0 30px oklch(0.78 0.12 85 / 0.6), 0 0 60px oklch(0.78 0.12 85 / 0.2); }
+}
+
+.screening-card-hover:hover {
+  animation: card-glow-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   CINEMA HALL SEAT STYLES
+   ============================================================ */
+
+.cinema-seat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 6px 6px 3px 3px;
+}
+
+.cinema-seat:hover:not(.cinema-seat-disabled) {
+  transform: scale(1.15) translateY(-2px);
+}
+
+.cinema-seat-available {
+  background: linear-gradient(180deg, oklch(0.55 0.22 145) 0%, oklch(0.38 0.18 145) 100%);
+  border: 1.5px solid oklch(0.65 0.22 145);
+  color: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.cinema-seat-available:hover {
+  background: linear-gradient(180deg, oklch(0.65 0.25 145) 0%, oklch(0.48 0.22 145) 100%);
+  box-shadow: 0 0 10px oklch(0.65 0.22 145 / 0.7), 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.cinema-seat-selected {
+  background: linear-gradient(180deg, oklch(0.85 0.15 85) 0%, oklch(0.68 0.12 75) 100%);
+  border: 1.5px solid oklch(0.78 0.12 85);
+  color: oklch(0.1 0 0);
+  box-shadow: 0 0 12px oklch(0.78 0.12 85 / 0.8), 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.cinema-seat-reserved {
+  background: linear-gradient(180deg, oklch(0.42 0.02 0) 0%, oklch(0.28 0.01 0) 100%);
+  border: 1.5px solid oklch(0.38 0.02 0);
+  color: oklch(0.5 0.01 0);
+  cursor: not-allowed;
+}
+
+.cinema-seat-booked {
+  background: linear-gradient(180deg, oklch(0.48 0.22 25) 0%, oklch(0.32 0.18 25) 100%);
+  border: 1.5px solid oklch(0.52 0.22 25);
+  color: oklch(0.85 0.05 25);
+  cursor: not-allowed;
+}
+
+/* ============================================================
+   SCREEN GLOW ANIMATION
+   ============================================================ */
+
+@keyframes screen-glow {
+  0%, 100% { box-shadow: 0 0 30px oklch(0.78 0.18 200 / 0.4), 0 0 60px oklch(0.78 0.18 200 / 0.2); }
+  50%       { box-shadow: 0 0 50px oklch(0.78 0.18 200 / 0.7), 0 0 100px oklch(0.78 0.18 200 / 0.3); }
+}
+
+.screen-glow {
+  animation: screen-glow 3s ease-in-out infinite;
+}
+
+/* ============================================================
+   RECEIPT PRINT STYLES
+   ============================================================ */
+
+@keyframes receipt-slide-in {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.receipt-animate {
+  animation: receipt-slide-in 0.5s ease-out forwards;
+}
