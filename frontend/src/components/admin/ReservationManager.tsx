@@ -1,5 +1,5 @@
-import React from 'react';
-import { useGetReservationsByScreening, useConfirmReservation, useCancelReservation } from '../../hooks/useQueries';
+import React, { useMemo } from 'react';
+import { useGetAllReservations, useConfirmReservation, useCancelReservation } from '../../hooks/useQueries';
 import { type Reservation, ReservationStatus } from '../../backend';
 import { CheckCircle, XCircle, User, Phone, Ticket, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,25 +21,31 @@ function StatusBadge({ status }: { status: ReservationStatus }) {
 }
 
 export default function ReservationManager({ screeningId }: ReservationManagerProps) {
-  const { data: reservations = [], isLoading } = useGetReservationsByScreening(screeningId);
+  // Use getAllReservations so we have the actual reservation IDs (needed for confirm/cancel)
+  const { data: allReservations = [], isLoading } = useGetAllReservations();
   const confirmReservation = useConfirmReservation();
   const cancelReservation = useCancelReservation();
 
+  // Filter to only reservations for this screening, preserving the [id, reservation] tuple
+  const screeningReservations = useMemo<[string, Reservation][]>(() => {
+    return allReservations.filter(([, res]) => res.screeningId === screeningId);
+  }, [allReservations, screeningId]);
+
   const handleConfirm = async (res: Reservation, id: string) => {
     try {
-      await confirmReservation.mutateAsync(id);
+      await confirmReservation.mutateAsync({ id, screeningId });
       toast.success(`Reservation confirmed for ${res.customerName}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to confirm');
+      toast.error(err instanceof Error ? err.message : 'Failed to confirm reservation');
     }
   };
 
   const handleCancel = async (res: Reservation, id: string) => {
     try {
-      await cancelReservation.mutateAsync(id);
+      await cancelReservation.mutateAsync({ id, screeningId });
       toast.success(`Reservation cancelled for ${res.customerName}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to cancel');
+      toast.error(err instanceof Error ? err.message : 'Failed to cancel reservation');
     }
   };
 
@@ -51,7 +57,7 @@ export default function ReservationManager({ screeningId }: ReservationManagerPr
     );
   }
 
-  if (reservations.length === 0) {
+  if (screeningReservations.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
         No reservations for this screening yet.
@@ -61,11 +67,13 @@ export default function ReservationManager({ screeningId }: ReservationManagerPr
 
   return (
     <div className="space-y-3">
-      {reservations.map((res, idx) => {
-        // Generate a consistent ID for display/actions
-        const resId = `${screeningId}-res-${idx}`;
+      {screeningReservations.map(([resId, res]) => {
+        const isConfirming = confirmReservation.isPending && confirmReservation.variables?.id === resId;
+        const isCancelling = cancelReservation.isPending && cancelReservation.variables?.id === resId;
+        const isActionPending = isConfirming || isCancelling;
+
         return (
-          <div key={idx} className="theatre-card rounded-lg p-4 space-y-3">
+          <div key={resId} className="theatre-card rounded-lg p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
@@ -76,6 +84,9 @@ export default function ReservationManager({ screeningId }: ReservationManagerPr
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <Phone className="w-3 h-3" />
                   {res.contactInfo}
+                </div>
+                <div className="text-xs text-muted-foreground/60 font-mono">
+                  ID: {resId}
                 </div>
               </div>
             </div>
@@ -101,11 +112,11 @@ export default function ReservationManager({ screeningId }: ReservationManagerPr
                 <Button
                   size="sm"
                   onClick={() => handleConfirm(res, resId)}
-                  disabled={confirmReservation.isPending}
+                  disabled={isActionPending || confirmReservation.isPending || cancelReservation.isPending}
                   className="flex-1 bg-green-900/30 text-green-400 border border-green-700/50 hover:bg-green-900/50 text-xs"
                 >
-                  {confirmReservation.isPending ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                  {isConfirming ? (
+                    <><Loader2 className="w-3 h-3 animate-spin mr-1" />Confirming...</>
                   ) : (
                     <><CheckCircle className="w-3 h-3 mr-1" />Confirm</>
                   )}
@@ -113,11 +124,11 @@ export default function ReservationManager({ screeningId }: ReservationManagerPr
                 <Button
                   size="sm"
                   onClick={() => handleCancel(res, resId)}
-                  disabled={cancelReservation.isPending}
+                  disabled={isActionPending || confirmReservation.isPending || cancelReservation.isPending}
                   className="flex-1 bg-theatre-red/20 text-theatre-red border border-theatre-red/40 hover:bg-theatre-red/30 text-xs"
                 >
-                  {cancelReservation.isPending ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
+                  {isCancelling ? (
+                    <><Loader2 className="w-3 h-3 animate-spin mr-1" />Cancelling...</>
                   ) : (
                     <><XCircle className="w-3 h-3 mr-1" />Cancel</>
                   )}

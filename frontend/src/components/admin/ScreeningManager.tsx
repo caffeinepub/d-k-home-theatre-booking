@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Calendar, Clock, Film, Loader2, X, Check, Image, Video, Link } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { Plus, Edit2, Trash2, Calendar, Clock, Film, Loader2, X, Check, Image, Video, Link, Upload } from 'lucide-react';
 import { useGetAllScreenings, useAddScreening, useEditScreening, useDeleteScreening, useCreateSeatPlan } from '../../hooks/useQueries';
 import type { Screening } from '../../backend';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import ErrorBoundary from '../ErrorBoundary';
+import { createSubmitGuard } from '../../utils/debounce';
 
 function formatDate(timestamp: bigint): string {
   const ms = Number(timestamp) / 1_000_000;
@@ -63,31 +65,59 @@ interface ScreeningManagerProps {
   selectedScreeningId: string | null;
 }
 
-function UrlListEditor({
-  label,
-  icon: Icon,
-  placeholder,
-  values,
-  onChange,
-}: {
+function isDataUrl(url: string): boolean {
+  return url.startsWith('data:');
+}
+
+function getMediaLabel(url: string): string {
+  if (isDataUrl(url)) {
+    if (url.startsWith('data:image/')) return '📷 Device image';
+    if (url.startsWith('data:video/')) return '🎬 Device video';
+    return '📁 Device file';
+  }
+  try {
+    const u = new URL(url);
+    return u.hostname + u.pathname.slice(0, 30);
+  } catch {
+    return url.slice(0, 40);
+  }
+}
+
+interface MediaListEditorProps {
   label: string;
   icon: React.ElementType;
-  placeholder: string;
+  urlPlaceholder: string;
+  acceptFiles: string;
   values: string[];
   onChange: (values: string[]) => void;
-}) {
-  const [inputVal, setInputVal] = useState('');
+  previewType: 'image' | 'video';
+  disabled?: boolean;
+}
 
-  const addEntry = () => {
+function MediaListEditor({
+  label,
+  icon: Icon,
+  urlPlaceholder,
+  acceptFiles,
+  values,
+  onChange,
+  previewType,
+  disabled = false,
+}: MediaListEditorProps) {
+  const [inputVal, setInputVal] = useState('');
+  const [isConverting, setIsConverting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const addEntry = useCallback(() => {
     const trimmed = inputVal.trim();
     if (!trimmed) return;
     onChange([...values, trimmed]);
     setInputVal('');
-  };
+  }, [inputVal, values, onChange]);
 
-  const removeEntry = (index: number) => {
+  const removeEntry = useCallback((index: number) => {
     onChange(values.filter((_, i) => i !== index));
-  };
+  }, [values, onChange]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -96,30 +126,94 @@ function UrlListEditor({
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsConverting(true);
+    const promises = Array.from(files).map(
+      (file) =>
+        new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        })
+    );
+
+    Promise.all(promises)
+      .then((dataUrls) => {
+        onChange([...values, ...dataUrls]);
+      })
+      .catch(() => {
+        toast.error('Failed to read file(s). Please try again.');
+      })
+      .finally(() => {
+        setIsConverting(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      });
+  };
+
+  const isUploadBusy = isConverting || disabled;
+
   return (
     <div className="space-y-2">
       <Label className="text-sm flex items-center gap-1.5">
         <Icon className="w-3.5 h-3.5 text-gold" />
         {label}
       </Label>
+
+      {/* URL input row */}
       <div className="flex gap-2">
         <Input
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder}
+          placeholder={urlPlaceholder}
+          disabled={disabled}
           className="bg-theatre-dark border-gold-dim focus:border-gold text-sm"
         />
         <Button
           type="button"
           size="sm"
           onClick={addEntry}
-          disabled={!inputVal.trim()}
+          disabled={!inputVal.trim() || disabled}
           className="gold-gradient text-theatre-dark font-semibold flex-shrink-0"
+          title="Add URL"
         >
-          <Plus className="w-4 h-4" />
+          <Link className="w-4 h-4" />
         </Button>
       </div>
+
+      {/* Device upload button */}
+      <div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={acceptFiles}
+          multiple
+          className="hidden"
+          onChange={handleFileChange}
+          disabled={isUploadBusy}
+        />
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={isUploadBusy}
+          className="border-gold-dim text-gold hover:bg-theatre-gold/10 hover:border-gold text-xs w-full"
+        >
+          {isConverting ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+          ) : (
+            <Upload className="w-3.5 h-3.5 mr-1.5" />
+          )}
+          {isConverting ? 'Reading file…' : 'Upload from device / gallery'}
+        </Button>
+      </div>
+
+      {/* Entries list */}
       {values.length > 0 && (
         <ul className="space-y-1.5 mt-1">
           {values.map((url, i) => (
@@ -127,12 +221,29 @@ function UrlListEditor({
               key={i}
               className="flex items-center gap-2 bg-theatre-dark border border-gold-dim rounded-md px-3 py-1.5 text-xs"
             >
-              <Link className="w-3 h-3 text-gold flex-shrink-0" />
-              <span className="flex-1 truncate text-muted-foreground">{url}</span>
+              {/* Inline preview */}
+              {previewType === 'image' && isDataUrl(url) && url.startsWith('data:image/') ? (
+                <img
+                  src={url}
+                  alt={`preview ${i}`}
+                  className="w-8 h-8 object-cover rounded flex-shrink-0 border border-gold-dim"
+                  loading="lazy"
+                />
+              ) : previewType === 'video' && isDataUrl(url) && url.startsWith('data:video/') ? (
+                <video
+                  src={url}
+                  className="w-12 h-8 object-cover rounded flex-shrink-0 border border-gold-dim"
+                  muted
+                />
+              ) : (
+                <Link className="w-3 h-3 text-gold flex-shrink-0" />
+              )}
+              <span className="flex-1 truncate text-muted-foreground">{getMediaLabel(url)}</span>
               <button
                 type="button"
                 onClick={() => removeEntry(i)}
-                className="text-muted-foreground hover:text-theatre-red transition-colors flex-shrink-0"
+                disabled={disabled}
+                className="text-muted-foreground hover:text-theatre-red transition-colors flex-shrink-0 disabled:opacity-40"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -144,7 +255,10 @@ function UrlListEditor({
   );
 }
 
-export default function ScreeningManager({ onSelectScreening, selectedScreeningId }: ScreeningManagerProps) {
+// Submit guard: prevents submissions within 500ms of each other
+const submitGuard = createSubmitGuard(500);
+
+function ScreeningManagerInner({ onSelectScreening, selectedScreeningId }: ScreeningManagerProps) {
   const { data: screenings = [], isLoading } = useGetAllScreenings();
   const addScreening = useAddScreening();
   const editScreening = useEditScreening();
@@ -177,6 +291,12 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Debounce guard: reject rapid re-submissions
+    if (!submitGuard()) {
+      return;
+    }
+
     if (!form.title.trim() || !form.date || !form.time) {
       toast.error('Title, date, and time are required');
       return;
@@ -202,13 +322,13 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
         try {
           await createSeatPlan.mutateAsync(id);
         } catch {
-          // Seat plan might already exist
+          // Seat plan might already exist — safe to ignore
         }
         toast.success('Screening added');
       }
       setDialogOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save screening');
+      toast.error(err instanceof Error ? err.message : 'Failed to save screening. Please try again.');
     }
   };
 
@@ -219,12 +339,13 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
       if (selectedScreeningId === deleteTarget.id) onSelectScreening(null);
       toast.success('Screening deleted');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to delete');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete screening');
     }
     setDeleteTarget(null);
   };
 
   const isSaving = addScreening.isPending || editScreening.isPending;
+  const isDeleting = deleteScreening.isPending;
 
   return (
     <div className="space-y-4">
@@ -234,6 +355,7 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
           onClick={openAdd}
           size="sm"
           className="gold-gradient text-theatre-dark font-semibold hover:opacity-90"
+          disabled={isSaving}
         >
           <Plus className="w-4 h-4 mr-1" />
           Add
@@ -297,13 +419,15 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
                 <div className="flex gap-1 flex-shrink-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); openEdit(s); }}
-                    className="p-1.5 rounded hover:bg-theatre-gold/10 text-muted-foreground hover:text-gold transition-colors"
+                    disabled={isSaving}
+                    className="p-1.5 rounded hover:bg-theatre-gold/10 text-muted-foreground hover:text-gold transition-colors disabled:opacity-40"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteTarget(s); }}
-                    className="p-1.5 rounded hover:bg-theatre-red/10 text-muted-foreground hover:text-theatre-red transition-colors"
+                    disabled={isDeleting}
+                    className="p-1.5 rounded hover:bg-theatre-red/10 text-muted-foreground hover:text-theatre-red transition-colors disabled:opacity-40"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -315,7 +439,7 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!isSaving) setDialogOpen(open); }}>
         <DialogContent className="bg-theatre-surface border-gold-dim text-foreground max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-gold flex items-center gap-2">
@@ -330,6 +454,7 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 placeholder="Film or event title"
+                disabled={isSaving}
                 className="bg-theatre-dark border-gold-dim focus:border-gold"
               />
             </div>
@@ -340,6 +465,7 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
                   type="date"
                   value={form.date}
                   onChange={(e) => setForm({ ...form, date: e.target.value })}
+                  disabled={isSaving}
                   className="bg-theatre-dark border-gold-dim focus:border-gold"
                 />
               </div>
@@ -349,6 +475,7 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
                   type="time"
                   value={form.time}
                   onChange={(e) => setForm({ ...form, time: e.target.value })}
+                  disabled={isSaving}
                   className="bg-theatre-dark border-gold-dim focus:border-gold"
                 />
               </div>
@@ -360,6 +487,7 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Optional description"
                 rows={3}
+                disabled={isSaving}
                 className="bg-theatre-dark border-gold-dim focus:border-gold resize-none"
               />
             </div>
@@ -368,23 +496,33 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
             <div className="border-t border-gold-dim pt-3">
               <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5">
                 <Film className="w-3.5 h-3.5 text-gold" />
-                Media Attachments (optional)
+                Media Attachments — paste a URL or upload from your device/gallery
               </p>
               <div className="space-y-4">
-                <UrlListEditor
-                  label="Poster Image URLs"
-                  icon={Image}
-                  placeholder="https://example.com/poster.jpg"
-                  values={form.posterImages}
-                  onChange={(posterImages) => setForm({ ...form, posterImages })}
-                />
-                <UrlListEditor
-                  label="Trailer Video Links"
-                  icon={Video}
-                  placeholder="https://youtube.com/watch?v=... or any video URL"
-                  values={form.trailerLinks}
-                  onChange={(trailerLinks) => setForm({ ...form, trailerLinks })}
-                />
+                <ErrorBoundary>
+                  <MediaListEditor
+                    label="Poster Images"
+                    icon={Image}
+                    urlPlaceholder="https://example.com/poster.jpg"
+                    acceptFiles="image/*"
+                    values={form.posterImages}
+                    onChange={(posterImages) => setForm({ ...form, posterImages })}
+                    previewType="image"
+                    disabled={isSaving}
+                  />
+                </ErrorBoundary>
+                <ErrorBoundary>
+                  <MediaListEditor
+                    label="Trailer Videos"
+                    icon={Video}
+                    urlPlaceholder="https://youtube.com/watch?v=... or any video URL"
+                    acceptFiles="video/*,image/*"
+                    values={form.trailerLinks}
+                    onChange={(trailerLinks) => setForm({ ...form, trailerLinks })}
+                    previewType="video"
+                    disabled={isSaving}
+                  />
+                </ErrorBoundary>
               </div>
             </div>
 
@@ -403,33 +541,57 @@ export default function ScreeningManager({ onSelectScreening, selectedScreeningI
                 disabled={isSaving}
                 className="gold-gradient text-theatre-dark font-semibold"
               >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : editTarget ? 'Save Changes' : 'Add Screening'}
+                {isSaving ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving…
+                  </span>
+                ) : editTarget ? 'Save Changes' : 'Add Screening'}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirm */}
-      <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open && !isDeleting) setDeleteTarget(null); }}>
         <AlertDialogContent className="bg-theatre-surface border-gold-dim text-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="font-display text-foreground">Delete Screening?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Screening?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
-              This will permanently delete "{deleteTarget?.title}" and all associated seat plans and reservations.
+              This will permanently delete <strong className="text-foreground">{deleteTarget?.title}</strong> and all associated seat plans and reservations. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-gold-dim text-muted-foreground bg-transparent">Cancel</AlertDialogCancel>
+            <AlertDialogCancel
+              className="border-gold-dim text-muted-foreground"
+              disabled={isDeleting}
+            >
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
-              className="bg-theatre-red text-foreground hover:opacity-90"
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Delete
+              {isDeleting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting…
+                </span>
+              ) : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function ScreeningManager(props: ScreeningManagerProps) {
+  return (
+    <ErrorBoundary>
+      <ScreeningManagerInner {...props} />
+    </ErrorBoundary>
   );
 }

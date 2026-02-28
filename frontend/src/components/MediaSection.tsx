@@ -1,19 +1,44 @@
-import React, { useState } from 'react';
-import { ExternalLink, Play, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import React, { useState, useMemo, memo } from 'react';
+import { ExternalLink, Play, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import ErrorBoundary from './ErrorBoundary';
 
 interface MediaSectionProps {
   posterImages: string[];
   trailerLinks: string[];
 }
 
+function isDataUrl(url: string): boolean {
+  return typeof url === 'string' && url.startsWith('data:');
+}
+
+function isBlobUrl(url: string): boolean {
+  return typeof url === 'string' && url.startsWith('blob:');
+}
+
+function isLocalVideoUrl(url: string): boolean {
+  if (!url) return false;
+  if (isDataUrl(url)) return url.startsWith('data:video/');
+  if (isBlobUrl(url)) return true;
+  return false;
+}
+
+function isValidUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  if (isDataUrl(url) || isBlobUrl(url)) return true;
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function getYouTubeEmbedUrl(url: string): string | null {
   try {
     const u = new URL(url);
-    // youtube.com/watch?v=ID
     if (u.hostname.includes('youtube.com') && u.searchParams.get('v')) {
       return `https://www.youtube.com/embed/${u.searchParams.get('v')}`;
     }
-    // youtu.be/ID
     if (u.hostname === 'youtu.be') {
       const id = u.pathname.replace('/', '');
       if (id) return `https://www.youtube.com/embed/${id}`;
@@ -41,17 +66,23 @@ function getEmbedUrl(url: string): string | null {
   return getYouTubeEmbedUrl(url) ?? getVimeoEmbedUrl(url);
 }
 
-function PosterGallery({ images }: { images: string[] }) {
-  const [current, setCurrent] = useState(0);
+const PosterPlaceholder = () => (
+  <div className="w-full h-full flex flex-col items-center justify-center bg-theatre-dark text-muted-foreground gap-2">
+    <ImageIcon className="w-10 h-10 opacity-30" />
+    <span className="text-xs opacity-50">Image unavailable</span>
+  </div>
+);
+
+const PosterGallery = memo(function PosterGallery({ images }: { images: string[] }) {
   const [imgError, setImgError] = useState<Record<number, boolean>>({});
+  const [current, setCurrent] = useState(0);
 
-  if (images.length === 0) return null;
+  const validImages = useMemo(
+    () => images.filter((url) => url && typeof url === 'string' && url.trim() !== ''),
+    [images]
+  );
 
-  const validImages = images.filter((_, i) => !imgError[i]);
   if (validImages.length === 0) return null;
-
-  const prev = () => setCurrent((c) => (c - 1 + images.length) % images.length);
-  const next = () => setCurrent((c) => (c + 1) % images.length);
 
   return (
     <div className="space-y-2">
@@ -60,46 +91,90 @@ function PosterGallery({ images }: { images: string[] }) {
         Posters
       </h4>
       <div className="relative">
-        {images.length === 1 ? (
-          <div className="rounded-lg overflow-hidden bg-theatre-dark border border-gold-dim max-w-xs mx-auto">
-            <img
-              src={images[0]}
-              alt="Movie poster"
-              className="w-full object-cover"
-              onError={() => setImgError((prev) => ({ ...prev, 0: true }))}
-            />
+        {validImages.length === 1 ? (
+          <div className="rounded-lg overflow-hidden bg-theatre-dark border border-gold-dim max-w-xs mx-auto" style={{ minHeight: '120px' }}>
+            {imgError[0] ? (
+              <PosterPlaceholder />
+            ) : (
+              <img
+                src={validImages[0]}
+                alt="Movie poster"
+                className="w-full object-cover"
+                loading="lazy"
+                onError={() => setImgError((prev) => ({ ...prev, 0: true }))}
+              />
+            )}
           </div>
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
-            {images.map((url, i) => (
-              !imgError[i] && (
-                <div
-                  key={i}
-                  className={`flex-shrink-0 rounded-lg overflow-hidden border transition-all cursor-pointer ${
-                    current === i ? 'border-gold shadow-gold' : 'border-gold-dim'
-                  }`}
-                  style={{ width: '140px' }}
-                  onClick={() => setCurrent(i)}
-                >
+            {validImages.map((url, i) => (
+              <div
+                key={i}
+                className={`flex-shrink-0 rounded-lg overflow-hidden border transition-all cursor-pointer ${
+                  current === i ? 'border-gold shadow-gold' : 'border-gold-dim'
+                }`}
+                style={{ width: '140px', minHeight: '192px' }}
+                onClick={() => setCurrent(i)}
+              >
+                {imgError[i] ? (
+                  <div className="w-full h-48 flex items-center justify-center bg-theatre-dark">
+                    <ImageIcon className="w-8 h-8 text-muted-foreground opacity-30" />
+                  </div>
+                ) : (
                   <img
                     src={url}
                     alt={`Poster ${i + 1}`}
                     className="w-full h-48 object-cover"
+                    loading="lazy"
                     onError={() => setImgError((prev) => ({ ...prev, [i]: true }))}
                   />
-                </div>
-              )
+                )}
+              </div>
             ))}
           </div>
         )}
       </div>
     </div>
   );
-}
+});
 
-function TrailerEmbed({ url, index }: { url: string; index: number }) {
+const TrailerEmbed = memo(function TrailerEmbed({ url, index }: { url: string; index: number }) {
+  const [videoError, setVideoError] = useState(false);
+
+  if (!isValidUrl(url)) {
+    return (
+      <div className="flex items-center gap-3 p-4 rounded-lg border border-gold-dim/40 bg-theatre-dark text-muted-foreground text-sm">
+        <AlertCircle className="w-4 h-4 flex-shrink-0 text-destructive/60" />
+        <span>Trailer {index + 1}: Invalid URL</span>
+      </div>
+    );
+  }
+
+  // Local device video (data URL or blob URL) — render inline HTML video
+  if (isLocalVideoUrl(url)) {
+    if (videoError) {
+      return (
+        <div className="flex items-center gap-3 p-4 rounded-lg border border-gold-dim/40 bg-theatre-dark text-muted-foreground text-sm">
+          <AlertCircle className="w-4 h-4 flex-shrink-0 text-destructive/60" />
+          <span>Trailer {index + 1}: Could not load video</span>
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-lg overflow-hidden border border-gold-dim bg-theatre-dark">
+        <video
+          src={url}
+          controls
+          className="w-full max-h-72 object-contain bg-black"
+          title={`Trailer ${index + 1}`}
+          onError={() => setVideoError(true)}
+        />
+      </div>
+    );
+  }
+
+  // YouTube / Vimeo embed
   const embedUrl = getEmbedUrl(url);
-
   if (embedUrl) {
     return (
       <div className="rounded-lg overflow-hidden border border-gold-dim bg-theatre-dark">
@@ -110,12 +185,14 @@ function TrailerEmbed({ url, index }: { url: string; index: number }) {
             className="absolute inset-0 w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            loading="lazy"
           />
         </div>
       </div>
     );
   }
 
+  // Fallback: external link button
   return (
     <a
       href={url}
@@ -135,11 +212,20 @@ function TrailerEmbed({ url, index }: { url: string; index: number }) {
       <ExternalLink className="w-4 h-4 text-muted-foreground group-hover:text-gold transition-colors flex-shrink-0" />
     </a>
   );
-}
+});
 
-export default function MediaSection({ posterImages, trailerLinks }: MediaSectionProps) {
-  const hasPosters = posterImages && posterImages.length > 0;
-  const hasTrailers = trailerLinks && trailerLinks.length > 0;
+function MediaSectionInner({ posterImages, trailerLinks }: MediaSectionProps) {
+  const safePosters = useMemo(
+    () => (Array.isArray(posterImages) ? posterImages.filter((u) => u && typeof u === 'string') : []),
+    [posterImages]
+  );
+  const safeTrailers = useMemo(
+    () => (Array.isArray(trailerLinks) ? trailerLinks.filter((u) => u && typeof u === 'string') : []),
+    [trailerLinks]
+  );
+
+  const hasPosters = safePosters.length > 0;
+  const hasTrailers = safeTrailers.length > 0;
 
   if (!hasPosters && !hasTrailers) return null;
 
@@ -151,7 +237,18 @@ export default function MediaSection({ posterImages, trailerLinks }: MediaSectio
         <h3 className="font-display text-base font-semibold text-gold">Media</h3>
       </div>
 
-      {hasPosters && <PosterGallery images={posterImages} />}
+      {hasPosters && (
+        <ErrorBoundary
+          fallback={
+            <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-gold-dim/40 bg-theatre-dark">
+              <AlertCircle className="w-4 h-4 text-destructive/60 flex-shrink-0" />
+              Poster gallery could not be displayed.
+            </div>
+          }
+        >
+          <PosterGallery images={safePosters} />
+        </ErrorBoundary>
+      )}
 
       {hasTrailers && (
         <div className="space-y-2">
@@ -160,8 +257,18 @@ export default function MediaSection({ posterImages, trailerLinks }: MediaSectio
             Trailers
           </h4>
           <div className="space-y-3">
-            {trailerLinks.map((url, i) => (
-              <TrailerEmbed key={i} url={url} index={i} />
+            {safeTrailers.map((url, i) => (
+              <ErrorBoundary
+                key={i}
+                fallback={
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground p-3 rounded-lg border border-gold-dim/40 bg-theatre-dark">
+                    <AlertCircle className="w-4 h-4 text-destructive/60 flex-shrink-0" />
+                    Trailer {i + 1} could not be displayed.
+                  </div>
+                }
+              >
+                <TrailerEmbed url={url} index={i} />
+              </ErrorBoundary>
             ))}
           </div>
         </div>
@@ -169,3 +276,6 @@ export default function MediaSection({ posterImages, trailerLinks }: MediaSectio
     </div>
   );
 }
+
+const MediaSection = memo(MediaSectionInner);
+export default MediaSection;

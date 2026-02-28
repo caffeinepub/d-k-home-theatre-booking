@@ -19,6 +19,13 @@ export const Screening = IDL.Record({
   'trailerLinks' : IDL.Vec(IDL.Text),
   'posterImages' : IDL.Vec(IDL.Text),
 });
+export const Error = IDL.Variant({
+  'notAuthorized' : IDL.Null,
+  'invalidInput' : IDL.Text,
+  'notFound' : IDL.Text,
+  'internalError' : IDL.Text,
+});
+export const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : Error });
 export const SeatId = IDL.Text;
 export const SeatStatus = IDL.Variant({
   'reserved' : IDL.Null,
@@ -46,43 +53,48 @@ export const Reservation = IDL.Record({
   'status' : ReservationStatus,
   'contactInfo' : IDL.Text,
   'seatIds' : IDL.Vec(SeatId),
+  'userId' : IDL.Opt(IDL.Principal),
   'screeningId' : ScreeningId,
+});
+export const Result_6 = IDL.Variant({
+  'ok' : IDL.Vec(IDL.Tuple(IDL.Text, Reservation)),
+  'err' : Error,
 });
 export const UserProfile = IDL.Record({
   'contactInfo' : IDL.Text,
   'name' : IDL.Text,
 });
+export const Result_5 = IDL.Variant({ 'ok' : Reservation, 'err' : Error });
+export const Result_4 = IDL.Variant({
+  'ok' : IDL.Vec(Reservation),
+  'err' : Error,
+});
+export const Result_3 = IDL.Variant({ 'ok' : Screening, 'err' : Error });
+export const Result_2 = IDL.Variant({
+  'ok' : IDL.Vec(IDL.Tuple(IDL.Text, Seat)),
+  'err' : Error,
+});
+export const Result_1 = IDL.Variant({ 'ok' : IDL.Bool, 'err' : Error });
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-  'addScreening' : IDL.Func([Screening], [], []),
-  'addSeat' : IDL.Func([ScreeningId, Seat], [], []),
+  'addScreening' : IDL.Func([Screening], [Result], []),
+  'addSeat' : IDL.Func([ScreeningId, Seat], [Result], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'cancelReservation' : IDL.Func([IDL.Text], [], []),
-  'confirmReservation' : IDL.Func([IDL.Text], [], []),
-  'createSeatPlan' : IDL.Func([ScreeningId], [], []),
-  'deleteScreening' : IDL.Func([ScreeningId], [], []),
-  'editScreening' : IDL.Func([ScreeningId, Screening], [], []),
-  'getAllReservations' : IDL.Func(
-      [],
-      [IDL.Vec(IDL.Tuple(IDL.Text, Reservation))],
-      ['query'],
-    ),
+  'blockUser' : IDL.Func([IDL.Principal], [Result], []),
+  'cancelReservation' : IDL.Func([IDL.Text], [Result], []),
+  'confirmReservation' : IDL.Func([IDL.Text], [Result], []),
+  'createSeatPlan' : IDL.Func([ScreeningId], [Result], []),
+  'deleteScreening' : IDL.Func([ScreeningId], [Result], []),
+  'editScreening' : IDL.Func([ScreeningId, Screening], [Result], []),
+  'getAllReservations' : IDL.Func([], [Result_6], ['query']),
   'getAllScreenings' : IDL.Func([], [IDL.Vec(Screening)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getReservation' : IDL.Func([IDL.Text], [Reservation], ['query']),
-  'getReservationsByScreening' : IDL.Func(
-      [IDL.Text],
-      [IDL.Vec(Reservation)],
-      ['query'],
-    ),
-  'getScreening' : IDL.Func([ScreeningId], [Screening], ['query']),
-  'getSeatPlan' : IDL.Func(
-      [ScreeningId],
-      [IDL.Vec(IDL.Tuple(IDL.Text, Seat))],
-      ['query'],
-    ),
+  'getReservation' : IDL.Func([IDL.Text], [Result_5], ['query']),
+  'getReservationsByScreening' : IDL.Func([IDL.Text], [Result_4], ['query']),
+  'getScreening' : IDL.Func([ScreeningId], [Result_3], ['query']),
+  'getSeatPlan' : IDL.Func([ScreeningId], [Result_2], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
       [IDL.Opt(UserProfile)],
@@ -90,10 +102,12 @@ export const idlService = IDL.Service({
     ),
   'grantAdminRole' : IDL.Func([IDL.Principal], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-  'makeReservation' : IDL.Func([IDL.Text, Reservation], [], []),
-  'removeSeat' : IDL.Func([ScreeningId, SeatId], [], []),
+  'isUserBlocked' : IDL.Func([IDL.Principal], [Result_1], ['query']),
+  'makeReservation' : IDL.Func([IDL.Text, Reservation], [Result], []),
+  'removeSeat' : IDL.Func([ScreeningId, SeatId], [Result], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-  'toggleSeatStatus' : IDL.Func([ScreeningId, SeatId], [], []),
+  'toggleSeatStatus' : IDL.Func([ScreeningId, SeatId], [Result], []),
+  'unblockUser' : IDL.Func([IDL.Principal], [Result], []),
 });
 
 export const idlInitArgs = [];
@@ -110,6 +124,13 @@ export const idlFactory = ({ IDL }) => {
     'trailerLinks' : IDL.Vec(IDL.Text),
     'posterImages' : IDL.Vec(IDL.Text),
   });
+  const Error = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalidInput' : IDL.Text,
+    'notFound' : IDL.Text,
+    'internalError' : IDL.Text,
+  });
+  const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : Error });
   const SeatId = IDL.Text;
   const SeatStatus = IDL.Variant({
     'reserved' : IDL.Null,
@@ -137,43 +158,45 @@ export const idlFactory = ({ IDL }) => {
     'status' : ReservationStatus,
     'contactInfo' : IDL.Text,
     'seatIds' : IDL.Vec(SeatId),
+    'userId' : IDL.Opt(IDL.Principal),
     'screeningId' : ScreeningId,
+  });
+  const Result_6 = IDL.Variant({
+    'ok' : IDL.Vec(IDL.Tuple(IDL.Text, Reservation)),
+    'err' : Error,
   });
   const UserProfile = IDL.Record({
     'contactInfo' : IDL.Text,
     'name' : IDL.Text,
   });
+  const Result_5 = IDL.Variant({ 'ok' : Reservation, 'err' : Error });
+  const Result_4 = IDL.Variant({ 'ok' : IDL.Vec(Reservation), 'err' : Error });
+  const Result_3 = IDL.Variant({ 'ok' : Screening, 'err' : Error });
+  const Result_2 = IDL.Variant({
+    'ok' : IDL.Vec(IDL.Tuple(IDL.Text, Seat)),
+    'err' : Error,
+  });
+  const Result_1 = IDL.Variant({ 'ok' : IDL.Bool, 'err' : Error });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
-    'addScreening' : IDL.Func([Screening], [], []),
-    'addSeat' : IDL.Func([ScreeningId, Seat], [], []),
+    'addScreening' : IDL.Func([Screening], [Result], []),
+    'addSeat' : IDL.Func([ScreeningId, Seat], [Result], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'cancelReservation' : IDL.Func([IDL.Text], [], []),
-    'confirmReservation' : IDL.Func([IDL.Text], [], []),
-    'createSeatPlan' : IDL.Func([ScreeningId], [], []),
-    'deleteScreening' : IDL.Func([ScreeningId], [], []),
-    'editScreening' : IDL.Func([ScreeningId, Screening], [], []),
-    'getAllReservations' : IDL.Func(
-        [],
-        [IDL.Vec(IDL.Tuple(IDL.Text, Reservation))],
-        ['query'],
-      ),
+    'blockUser' : IDL.Func([IDL.Principal], [Result], []),
+    'cancelReservation' : IDL.Func([IDL.Text], [Result], []),
+    'confirmReservation' : IDL.Func([IDL.Text], [Result], []),
+    'createSeatPlan' : IDL.Func([ScreeningId], [Result], []),
+    'deleteScreening' : IDL.Func([ScreeningId], [Result], []),
+    'editScreening' : IDL.Func([ScreeningId, Screening], [Result], []),
+    'getAllReservations' : IDL.Func([], [Result_6], ['query']),
     'getAllScreenings' : IDL.Func([], [IDL.Vec(Screening)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getReservation' : IDL.Func([IDL.Text], [Reservation], ['query']),
-    'getReservationsByScreening' : IDL.Func(
-        [IDL.Text],
-        [IDL.Vec(Reservation)],
-        ['query'],
-      ),
-    'getScreening' : IDL.Func([ScreeningId], [Screening], ['query']),
-    'getSeatPlan' : IDL.Func(
-        [ScreeningId],
-        [IDL.Vec(IDL.Tuple(IDL.Text, Seat))],
-        ['query'],
-      ),
+    'getReservation' : IDL.Func([IDL.Text], [Result_5], ['query']),
+    'getReservationsByScreening' : IDL.Func([IDL.Text], [Result_4], ['query']),
+    'getScreening' : IDL.Func([ScreeningId], [Result_3], ['query']),
+    'getSeatPlan' : IDL.Func([ScreeningId], [Result_2], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(UserProfile)],
@@ -181,10 +204,12 @@ export const idlFactory = ({ IDL }) => {
       ),
     'grantAdminRole' : IDL.Func([IDL.Principal], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
-    'makeReservation' : IDL.Func([IDL.Text, Reservation], [], []),
-    'removeSeat' : IDL.Func([ScreeningId, SeatId], [], []),
+    'isUserBlocked' : IDL.Func([IDL.Principal], [Result_1], ['query']),
+    'makeReservation' : IDL.Func([IDL.Text, Reservation], [Result], []),
+    'removeSeat' : IDL.Func([ScreeningId, SeatId], [Result], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
-    'toggleSeatStatus' : IDL.Func([ScreeningId, SeatId], [], []),
+    'toggleSeatStatus' : IDL.Func([ScreeningId, SeatId], [Result], []),
+    'unblockUser' : IDL.Func([IDL.Principal], [Result], []),
   });
 };
 

@@ -10,16 +10,35 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export type Error = { 'notAuthorized' : null } |
+  { 'invalidInput' : string } |
+  { 'notFound' : string } |
+  { 'internalError' : string };
 export interface Reservation {
   'customerName' : string,
   'status' : ReservationStatus,
   'contactInfo' : string,
   'seatIds' : Array<SeatId>,
+  'userId' : [] | [Principal],
   'screeningId' : ScreeningId,
 }
 export type ReservationStatus = { 'cancelled' : null } |
   { 'pending' : null } |
   { 'confirmed' : null };
+export type Result = { 'ok' : null } |
+  { 'err' : Error };
+export type Result_1 = { 'ok' : boolean } |
+  { 'err' : Error };
+export type Result_2 = { 'ok' : Array<[string, Seat]> } |
+  { 'err' : Error };
+export type Result_3 = { 'ok' : Screening } |
+  { 'err' : Error };
+export type Result_4 = { 'ok' : Array<Reservation> } |
+  { 'err' : Error };
+export type Result_5 = { 'ok' : Reservation } |
+  { 'err' : Error };
+export type Result_6 = { 'ok' : Array<[string, Reservation]> } |
+  { 'err' : Error };
 export interface Screening {
   'id' : ScreeningId,
   'title' : string,
@@ -47,29 +66,32 @@ export type UserRole = { 'admin' : null } |
   { 'guest' : null };
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
-  'addScreening' : ActorMethod<[Screening], undefined>,
-  'addSeat' : ActorMethod<[ScreeningId, Seat], undefined>,
+  'addScreening' : ActorMethod<[Screening], Result>,
+  'addSeat' : ActorMethod<[ScreeningId, Seat], Result>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'cancelReservation' : ActorMethod<[string], undefined>,
-  'confirmReservation' : ActorMethod<[string], undefined>,
-  'createSeatPlan' : ActorMethod<[ScreeningId], undefined>,
-  'deleteScreening' : ActorMethod<[ScreeningId], undefined>,
-  'editScreening' : ActorMethod<[ScreeningId, Screening], undefined>,
-  'getAllReservations' : ActorMethod<[], Array<[string, Reservation]>>,
+  'blockUser' : ActorMethod<[Principal], Result>,
+  'cancelReservation' : ActorMethod<[string], Result>,
+  'confirmReservation' : ActorMethod<[string], Result>,
+  'createSeatPlan' : ActorMethod<[ScreeningId], Result>,
+  'deleteScreening' : ActorMethod<[ScreeningId], Result>,
+  'editScreening' : ActorMethod<[ScreeningId, Screening], Result>,
+  'getAllReservations' : ActorMethod<[], Result_6>,
   'getAllScreenings' : ActorMethod<[], Array<Screening>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getReservation' : ActorMethod<[string], Reservation>,
-  'getReservationsByScreening' : ActorMethod<[string], Array<Reservation>>,
-  'getScreening' : ActorMethod<[ScreeningId], Screening>,
-  'getSeatPlan' : ActorMethod<[ScreeningId], Array<[string, Seat]>>,
+  'getReservation' : ActorMethod<[string], Result_5>,
+  'getReservationsByScreening' : ActorMethod<[string], Result_4>,
+  'getScreening' : ActorMethod<[ScreeningId], Result_3>,
+  'getSeatPlan' : ActorMethod<[ScreeningId], Result_2>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'grantAdminRole' : ActorMethod<[Principal], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
-  'makeReservation' : ActorMethod<[string, Reservation], undefined>,
-  'removeSeat' : ActorMethod<[ScreeningId, SeatId], undefined>,
+  'isUserBlocked' : ActorMethod<[Principal], Result_1>,
+  'makeReservation' : ActorMethod<[string, Reservation], Result>,
+  'removeSeat' : ActorMethod<[ScreeningId, SeatId], Result>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
-  'toggleSeatStatus' : ActorMethod<[ScreeningId, SeatId], undefined>,
+  'toggleSeatStatus' : ActorMethod<[ScreeningId, SeatId], Result>,
+  'unblockUser' : ActorMethod<[Principal], Result>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { ArrowLeft, Calendar, Clock, Film } from 'lucide-react';
 import type { Screening, Seat } from '../backend';
 import { useGetSeatPlan } from '../hooks/useQueries';
 import SeatMap from '../components/SeatMap';
 import ReservationForm from '../components/ReservationForm';
 import MediaSection from '../components/MediaSection';
+import ErrorBoundary from '../components/ErrorBoundary';
 import FoodItems, { type SelectedFoodItem } from './FoodItems';
 import BillReceipt from './BillReceipt';
 
@@ -38,28 +39,29 @@ export default function BookingFlow({ screening, onBack }: BookingFlowProps) {
 
   const { data: seatPlanEntries = [] } = useGetSeatPlan(screening.id);
 
-  const handleToggleSeat = (seatId: string) => {
+  // Memoized seat toggle to prevent SeatMap re-renders
+  const handleToggleSeat = useCallback((seatId: string) => {
     setSelectedSeatIds((prev) =>
       prev.includes(seatId) ? prev.filter((id) => id !== seatId) : [...prev, seatId]
     );
-  };
+  }, []);
 
-  const handleReservationSuccess = (resId: string, name: string, contact: string) => {
+  const handleReservationSuccess = useCallback((resId: string, name: string, contact: string) => {
     setReservationId(resId);
     setCustomerName(name);
     setContactInfo(contact);
     setStep('food-items');
-  };
+  }, []);
 
-  const handleFoodContinue = (selections: SelectedFoodItem[]) => {
+  const handleFoodContinue = useCallback((selections: SelectedFoodItem[]) => {
     setFoodSelections(selections);
     setStep('bill-receipt');
-  };
+  }, []);
 
-  const handleFoodSkip = () => {
+  const handleFoodSkip = useCallback(() => {
     setFoodSelections([]);
     setStep('bill-receipt');
-  };
+  }, []);
 
   const selectedSeats: Seat[] = seatPlanEntries
     .filter(([id]) => selectedSeatIds.includes(id))
@@ -134,13 +136,15 @@ export default function BookingFlow({ screening, onBack }: BookingFlowProps) {
         </div>
       </div>
 
-      {/* Media section — shown only on seat selection step */}
+      {/* Media section — shown only on seat selection step, wrapped in error boundary */}
       {step === 'select-seats' && (
         <div className="mb-6">
-          <MediaSection
-            posterImages={screening.posterImages ?? []}
-            trailerLinks={screening.trailerLinks ?? []}
-          />
+          <ErrorBoundary>
+            <MediaSection
+              posterImages={screening.posterImages ?? []}
+              trailerLinks={screening.trailerLinks ?? []}
+            />
+          </ErrorBoundary>
         </div>
       )}
 
@@ -176,11 +180,13 @@ export default function BookingFlow({ screening, onBack }: BookingFlowProps) {
         {step === 'select-seats' && (
           <div className="space-y-6">
             <h3 className="font-display text-lg font-semibold text-foreground">Choose Your Seats</h3>
-            <SeatMap
-              screeningId={screening.id}
-              selectedSeatIds={selectedSeatIds}
-              onToggleSeat={handleToggleSeat}
-            />
+            <ErrorBoundary>
+              <SeatMap
+                screeningId={screening.id}
+                selectedSeatIds={selectedSeatIds}
+                onToggleSeat={handleToggleSeat}
+              />
+            </ErrorBoundary>
             {selectedSeatIds.length > 0 && (
               <button
                 onClick={() => setStep('fill-form')}
@@ -195,13 +201,15 @@ export default function BookingFlow({ screening, onBack }: BookingFlowProps) {
         {step === 'fill-form' && (
           <div className="space-y-4">
             <h3 className="font-display text-lg font-semibold text-foreground">Your Details</h3>
-            <ReservationForm
-              screening={screening}
-              selectedSeatIds={selectedSeatIds}
-              seatPlanEntries={seatPlanEntries}
-              onSuccess={handleReservationSuccess}
-              onCancel={() => setStep('select-seats')}
-            />
+            <ErrorBoundary>
+              <ReservationForm
+                screening={screening}
+                selectedSeatIds={selectedSeatIds}
+                seatPlanEntries={seatPlanEntries}
+                onSuccess={handleReservationSuccess}
+                onCancel={() => setStep('select-seats')}
+              />
+            </ErrorBoundary>
           </div>
         )}
       </div>

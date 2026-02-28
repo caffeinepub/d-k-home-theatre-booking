@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { useMakeReservation } from '../hooks/useQueries';
 import { type Screening, type Seat, ReservationStatus } from '../backend';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,8 @@ export default function ReservationForm({
   const [name, setName] = useState('');
   const [contact, setContact] = useState('');
   const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
+  const isSubmittingRef = useRef(false);
+  const lastSubmitRef = useRef(0);
 
   const makeReservation = useMakeReservation();
 
@@ -40,9 +42,19 @@ export default function ReservationForm({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Prevent duplicate submissions within 500ms
+    const now = Date.now();
+    if (isSubmittingRef.current || now - lastSubmitRef.current < 500) {
+      return;
+    }
+
     if (!validate()) return;
+
+    isSubmittingRef.current = true;
+    lastSubmitRef.current = now;
 
     const reservationId = `${screening.id}-${Date.now()}`;
     const reservation = {
@@ -59,8 +71,13 @@ export default function ReservationForm({
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Reservation failed';
       toast.error(msg.includes('not available') ? 'Some seats are no longer available. Please re-select.' : msg);
+    } finally {
+      isSubmittingRef.current = false;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [name, contact, screening.id, selectedSeatIds, makeReservation, onSuccess]);
+
+  const isPending = makeReservation.isPending;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -91,6 +108,7 @@ export default function ReservationForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your full name"
+          disabled={isPending}
           className="bg-theatre-surface border-gold-dim focus:border-gold text-foreground placeholder:text-muted-foreground"
         />
         {errors.name && <p className="text-xs text-destructive">{errors.name}</p>}
@@ -106,6 +124,7 @@ export default function ReservationForm({
           value={contact}
           onChange={(e) => setContact(e.target.value)}
           placeholder="Phone number or email"
+          disabled={isPending}
           className="bg-theatre-surface border-gold-dim focus:border-gold text-foreground placeholder:text-muted-foreground"
         />
         {errors.contact && <p className="text-xs text-destructive">{errors.contact}</p>}
@@ -117,16 +136,16 @@ export default function ReservationForm({
           variant="outline"
           onClick={onCancel}
           className="flex-1 border-gold-dim text-muted-foreground hover:text-foreground"
-          disabled={makeReservation.isPending}
+          disabled={isPending}
         >
           Back
         </Button>
         <Button
           type="submit"
-          disabled={makeReservation.isPending || selectedSeatIds.length === 0}
+          disabled={isPending || selectedSeatIds.length === 0}
           className="flex-1 gold-gradient text-theatre-dark font-semibold hover:opacity-90"
         >
-          {makeReservation.isPending ? (
+          {isPending ? (
             <span className="flex items-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Confirming…

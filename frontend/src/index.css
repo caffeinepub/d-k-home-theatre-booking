@@ -9,13 +9,13 @@
     --radius: 0.5rem;
 
     /* Cinematic dark theme */
-    --background: 0.1 0 0;
+    --background: 0.08 0.01 270;
     --foreground: 0.95 0.02 85;
 
-    --card: 0.14 0 0;
+    --card: 0.12 0.02 270;
     --card-foreground: 0.95 0.02 85;
 
-    --popover: 0.16 0 0;
+    --popover: 0.14 0.02 270;
     --popover-foreground: 0.95 0.02 85;
 
     /* Gold primary */
@@ -23,12 +23,12 @@
     --primary-foreground: 0.1 0 0;
 
     /* Dark secondary */
-    --secondary: 0.18 0 0;
+    --secondary: 0.18 0.02 270;
     --secondary-foreground: 0.85 0.02 85;
 
     /* Muted */
-    --muted: 0.2 0 0;
-    --muted-foreground: 0.55 0.01 85;
+    --muted: 0.18 0.02 270;
+    --muted-foreground: 0.55 0.02 270;
 
     /* Gold accent */
     --accent: 0.72 0.14 85;
@@ -38,32 +38,41 @@
     --destructive: 0.52 0.22 25;
     --destructive-foreground: 0.95 0 0;
 
-    --border: 0.25 0.02 85;
-    --input: 0.22 0.02 85;
+    --border: 0.25 0.04 270;
+    --input: 0.22 0.03 270;
     --ring: 0.78 0.12 85;
 
     --chart-1: 0.78 0.12 85;
     --chart-2: 0.52 0.22 25;
-    --chart-3: 0.55 0.01 85;
-    --chart-4: 0.65 0.15 150;
-    --chart-5: 0.45 0.18 270;
+    --chart-3: 0.65 0.22 200;
+    --chart-4: 0.65 0.28 300;
+    --chart-5: 0.72 0.20 75;
 
-    --sidebar: 0.12 0 0;
+    --sidebar: 0.10 0.02 270;
     --sidebar-foreground: 0.95 0.02 85;
     --sidebar-primary: 0.78 0.12 85;
     --sidebar-primary-foreground: 0.1 0 0;
-    --sidebar-accent: 0.18 0 0;
+    --sidebar-accent: 0.16 0.02 270;
     --sidebar-accent-foreground: 0.85 0.02 85;
-    --sidebar-border: 0.25 0.02 85;
+    --sidebar-border: 0.25 0.04 270;
     --sidebar-ring: 0.78 0.12 85;
 
     /* Theatre-specific tokens */
     --theatre-gold: 0.78 0.12 85;
     --theatre-gold-dim: 0.65 0.1 85;
     --theatre-red: 0.45 0.22 25;
-    --theatre-dark: 0.08 0 0;
-    --theatre-surface: 0.14 0 0;
-    --theatre-grey: 0.38 0 0;
+    --theatre-dark: 0.07 0.02 270;
+    --theatre-surface: 0.12 0.02 270;
+    --theatre-grey: 0.38 0.02 270;
+
+    /* Vibrant cinematic palette */
+    --deep-purple: oklch(0.55 0.30 290);
+    --electric-teal: oklch(0.65 0.22 200);
+    --vivid-crimson: oklch(0.58 0.26 25);
+    --warm-amber: oklch(0.78 0.20 75);
+    --midnight-blue: oklch(0.55 0.28 250);
+    --hot-pink: oklch(0.72 0.28 350);
+    --lime-green: oklch(0.72 0.22 140);
 
     /* Candy colors for animated background */
     --candy-pink: oklch(0.72 0.28 350);
@@ -82,6 +91,14 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', sans-serif;
+    /* Rich multi-color cinematic background */
+    background-image:
+      radial-gradient(ellipse at 15% 20%, oklch(0.55 0.30 290 / 0.18) 0%, transparent 45%),
+      radial-gradient(ellipse at 85% 15%, oklch(0.65 0.22 200 / 0.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 75% 80%, oklch(0.58 0.26 25 / 0.12) 0%, transparent 40%),
+      radial-gradient(ellipse at 25% 75%, oklch(0.78 0.20 75 / 0.10) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 50%, oklch(0.55 0.28 250 / 0.08) 0%, transparent 60%);
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4 {
@@ -169,8 +186,8 @@
 
   /* Neon glow effects for cards */
   .neon-border-cyan {
-    box-shadow: 0 0 15px oklch(0.78 0.18 200 / 0.5), inset 0 0 15px oklch(0.78 0.18 200 / 0.05);
-    border-color: oklch(0.78 0.18 200 / 0.7);
+    box-shadow: 0 0 15px oklch(0.65 0.22 200 / 0.5), inset 0 0 15px oklch(0.65 0.22 200 / 0.05);
+    border-color: oklch(0.65 0.22 200 / 0.7);
   }
 
   .neon-border-gold {
@@ -181,6 +198,16 @@
   .neon-border-pink {
     box-shadow: 0 0 15px oklch(0.72 0.28 350 / 0.5), inset 0 0 15px oklch(0.72 0.28 350 / 0.05);
     border-color: oklch(0.72 0.28 350 / 0.7);
+  }
+
+  .neon-border-purple {
+    box-shadow: 0 0 15px oklch(0.55 0.30 290 / 0.5), inset 0 0 15px oklch(0.55 0.30 290 / 0.05);
+    border-color: oklch(0.55 0.30 290 / 0.7);
+  }
+
+  .neon-border-teal {
+    box-shadow: 0 0 15px oklch(0.65 0.22 200 / 0.5), inset 0 0 15px oklch(0.65 0.22 200 / 0.05);
+    border-color: oklch(0.65 0.22 200 / 0.7);
   }
 
   /* Receipt styles */
@@ -196,7 +223,11 @@
 
   /* Cinema hall background */
   .cinema-hall-bg {
-    background: radial-gradient(ellipse at 50% 0%, oklch(0.18 0.04 250 / 0.6) 0%, oklch(0.06 0 0) 70%);
+    background:
+      radial-gradient(ellipse at 50% 0%, oklch(0.55 0.30 290 / 0.25) 0%, transparent 40%),
+      radial-gradient(ellipse at 80% 60%, oklch(0.65 0.22 200 / 0.20) 0%, transparent 40%),
+      radial-gradient(ellipse at 20% 80%, oklch(0.58 0.26 25 / 0.15) 0%, transparent 40%),
+      radial-gradient(ellipse at 50% 0%, oklch(0.18 0.04 250 / 0.6) 0%, oklch(0.06 0 0) 70%);
   }
 }
 
@@ -334,8 +365,17 @@
    ============================================================ */
 
 @keyframes screen-glow {
-  0%, 100% { box-shadow: 0 0 30px oklch(0.78 0.18 200 / 0.4), 0 0 60px oklch(0.78 0.18 200 / 0.2); }
-  50%       { box-shadow: 0 0 50px oklch(0.78 0.18 200 / 0.7), 0 0 100px oklch(0.78 0.18 200 / 0.3); }
+  0%, 100% {
+    box-shadow:
+      0 0 30px oklch(0.65 0.22 200 / 0.4),
+      0 0 60px oklch(0.55 0.30 290 / 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 50px oklch(0.65 0.22 200 / 0.7),
+      0 0 100px oklch(0.55 0.30 290 / 0.35),
+      0 0 140px oklch(0.78 0.20 75 / 0.15);
+  }
 }
 
 .screen-glow {

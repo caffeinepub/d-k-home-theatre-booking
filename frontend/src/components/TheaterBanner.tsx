@@ -10,24 +10,30 @@ export default function TheaterBanner() {
         alt=""
         aria-hidden="true"
         className="absolute inset-0 w-full h-full object-cover object-center scale-110"
-        style={{ filter: 'blur(8px) brightness(0.4)', transform: 'scale(1.1)' }}
+        style={{ filter: 'blur(8px) brightness(0.35)', transform: 'scale(1.1)' }}
         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
       />
 
-      {/* Fallback gradient background */}
+      {/* Multi-color radial gradient base */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'radial-gradient(ellipse at 50% 0%, oklch(0.22 0.08 85 / 0.8) 0%, oklch(0.08 0 0) 70%)',
+          background: `
+            radial-gradient(ellipse at 20% 50%, oklch(0.55 0.30 290 / 0.35) 0%, transparent 55%),
+            radial-gradient(ellipse at 80% 30%, oklch(0.65 0.22 200 / 0.30) 0%, transparent 50%),
+            radial-gradient(ellipse at 50% 80%, oklch(0.58 0.26 25 / 0.25) 0%, transparent 50%),
+            radial-gradient(ellipse at 70% 70%, oklch(0.78 0.20 75 / 0.20) 0%, transparent 45%),
+            radial-gradient(ellipse at 50% 0%, oklch(0.22 0.08 85 / 0.6) 0%, oklch(0.06 0 0) 70%)
+          `,
           zIndex: 1,
         }}
       />
 
-      {/* Cinematic gradient overlay */}
+      {/* Cinematic gradient overlay — dark vignette */}
       <div
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(to bottom, rgba(8,8,8,0.2) 0%, rgba(8,8,8,0.4) 50%, rgba(8,8,8,0.92) 100%)',
+          background: 'linear-gradient(to bottom, rgba(6,6,10,0.15) 0%, rgba(6,6,10,0.35) 50%, rgba(6,6,10,0.90) 100%)',
           zIndex: 2,
         }}
       />
@@ -93,8 +99,8 @@ export default function TheaterBanner() {
         <div
           className="flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full"
           style={{
-            background: 'oklch(0.78 0.12 85 / 0.15)',
-            border: '1px solid oklch(0.78 0.12 85 / 0.5)',
+            background: 'linear-gradient(135deg, oklch(0.55 0.30 290 / 0.20), oklch(0.65 0.22 200 / 0.20))',
+            border: '1px solid oklch(0.65 0.22 200 / 0.55)',
             backdropFilter: 'blur(4px)',
           }}
         >
@@ -105,12 +111,17 @@ export default function TheaterBanner() {
           <Star className="w-3.5 h-3.5 fill-current" style={{ color: 'oklch(0.88 0.22 95)' }} />
         </div>
 
-        {/* Main title with neon glow */}
+        {/* Main title with multi-color glow */}
         <h1
           className="font-display text-4xl sm:text-5xl md:text-7xl font-bold mb-3 leading-tight"
           style={{
             color: 'oklch(0.95 0.02 85)',
-            textShadow: '0 0 30px oklch(0.78 0.12 85 / 0.8), 0 0 60px oklch(0.78 0.12 85 / 0.4), 0 4px 8px rgba(0,0,0,0.8)',
+            textShadow: `
+              0 0 30px oklch(0.78 0.12 85 / 0.7),
+              0 0 60px oklch(0.55 0.30 290 / 0.35),
+              0 0 90px oklch(0.65 0.22 200 / 0.25),
+              0 4px 8px rgba(0,0,0,0.8)
+            `,
           }}
         >
           D.K Home Theatre
@@ -126,15 +137,21 @@ export default function TheaterBanner() {
           Special Screenings & Private Events
         </p>
 
-        {/* Decorative divider */}
+        {/* Decorative divider — multi-color */}
         <div className="flex items-center gap-4">
-          <div className="h-px w-20" style={{ background: 'linear-gradient(to right, transparent, oklch(0.78 0.12 85 / 0.8))' }} />
+          <div
+            className="h-px w-20"
+            style={{ background: 'linear-gradient(to right, transparent, oklch(0.65 0.22 200 / 0.9))' }}
+          />
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" style={{ color: 'oklch(0.78 0.12 85)' }} />
+            <Sparkles className="w-4 h-4" style={{ color: 'oklch(0.72 0.25 195)' }} />
             <Film className="w-5 h-5" style={{ color: 'oklch(0.78 0.12 85)' }} />
-            <Sparkles className="w-4 h-4" style={{ color: 'oklch(0.78 0.12 85)' }} />
+            <Sparkles className="w-4 h-4" style={{ color: 'oklch(0.65 0.28 300)' }} />
           </div>
-          <div className="h-px w-20" style={{ background: 'linear-gradient(to left, transparent, oklch(0.78 0.12 85 / 0.8))' }} />
+          <div
+            className="h-px w-20"
+            style={{ background: 'linear-gradient(to left, transparent, oklch(0.65 0.28 300 / 0.9))' }}
+          />
         </div>
 
         {/* Stats row */}

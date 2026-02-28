@@ -78,7 +78,38 @@ export default {
                     dark: 'oklch(var(--theatre-dark))',
                     surface: 'oklch(var(--theatre-surface))',
                     grey: 'oklch(var(--theatre-grey))',
-                }
+                },
+                // Vibrant cinematic palette tokens
+                'deep-purple': {
+                    DEFAULT: 'oklch(0.55 0.30 290)',
+                    light: 'oklch(0.65 0.28 290)',
+                    dark: 'oklch(0.42 0.28 290)',
+                },
+                'electric-teal': {
+                    DEFAULT: 'oklch(0.65 0.22 200)',
+                    light: 'oklch(0.75 0.20 200)',
+                    dark: 'oklch(0.50 0.22 200)',
+                },
+                'vivid-crimson': {
+                    DEFAULT: 'oklch(0.58 0.26 25)',
+                    light: 'oklch(0.68 0.24 25)',
+                    dark: 'oklch(0.45 0.26 25)',
+                },
+                'warm-amber': {
+                    DEFAULT: 'oklch(0.78 0.20 75)',
+                    light: 'oklch(0.88 0.18 75)',
+                    dark: 'oklch(0.62 0.20 75)',
+                },
+                'midnight-blue': {
+                    DEFAULT: 'oklch(0.55 0.28 250)',
+                    light: 'oklch(0.65 0.25 250)',
+                    dark: 'oklch(0.40 0.28 250)',
+                },
+                'hot-pink': {
+                    DEFAULT: 'oklch(0.72 0.28 350)',
+                    light: 'oklch(0.82 0.25 350)',
+                    dark: 'oklch(0.58 0.28 350)',
+                },
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -89,8 +120,11 @@ export default {
                 xs: '0 1px 2px 0 rgba(0,0,0,0.05)',
                 gold: '0 0 20px oklch(0.78 0.12 85 / 0.25)',
                 'gold-lg': '0 0 40px oklch(0.78 0.12 85 / 0.3)',
-                'neon-cyan': '0 0 20px oklch(0.78 0.18 200 / 0.5)',
+                'neon-cyan': '0 0 20px oklch(0.65 0.22 200 / 0.5)',
                 'neon-pink': '0 0 20px oklch(0.72 0.28 350 / 0.5)',
+                'neon-purple': '0 0 20px oklch(0.55 0.30 290 / 0.5)',
+                'neon-amber': '0 0 20px oklch(0.78 0.20 75 / 0.5)',
+                'neon-crimson': '0 0 20px oklch(0.58 0.26 25 / 0.5)',
             },
             keyframes: {
                 'accordion-down': {
@@ -112,7 +146,12 @@ export default {
                 'banner-pulse': {
                     '0%, 100%': { opacity: '0.8' },
                     '50%': { opacity: '1' },
-                }
+                },
+                'color-shift': {
+                    '0%, 100%': { filter: 'hue-rotate(0deg)' },
+                    '33%': { filter: 'hue-rotate(60deg)' },
+                    '66%': { filter: 'hue-rotate(120deg)' },
+                },
             },
             animation: {
                 'accordion-down': 'accordion-down 0.2s ease-out',
@@ -120,8 +159,9 @@ export default {
                 shimmer: 'shimmer 2s linear infinite',
                 'float-up': 'float-up 3s ease-in-out infinite',
                 'banner-pulse': 'banner-pulse 4s ease-in-out infinite',
+                'color-shift': 'color-shift 8s ease-in-out infinite',
             }
         }
     },
-    plugins: [typography, containerQueries, animate]
+    plugins: [typography, containerQueries, animate],
 };

@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-an-admin-self-promotion-ui-flow-when-a-logged-in-internet-identity-user-visits-the-admin-page-and-is-not-yet-an-admin-display-a-claim-admin-access-button-that-calls-the-backend-to-grant-them-admin-privileges-only-succeeds-if-no-admin-exists-yet-or-they-are-already-an-admin-after-a-successful-claim-refresh-the-admin-status-and-grant-access-to-the-adminpanel",
-      "featureTitle": "Add an admin self-promotion UI flow: when a logged-in Internet Identity user visits the Admin page and is not yet an admin, display a 'Claim Admin Access' button that calls the backend to grant them admin privileges (only succeeds if no admin exists yet or they are already an admin). After a successful claim, refresh the admin status and grant access to the AdminPanel.",
+      "featureId": "feature-after-an-admin-accepts-or-denies-a-ticket-reservation-in-the-reservationmanager-ui-immediately-refresh-the-reservation-list-and-seat-plan-data-without-requiring-a-manual-page-reload-invalidate-and-refetch-all-relevant-react-query-caches-reservations-seat-plan-upon-mutation-success-or-failure",
+      "featureTitle": "After an admin accepts or denies a ticket/reservation in the ReservationManager UI, immediately refresh the reservation list and seat plan data without requiring a manual page reload. Invalidate and refetch all relevant React Query caches (reservations, seat plan) upon mutation success or failure.",
       "files": [
-        "frontend/src/components/admin/AdminGuard.tsx",
+        "frontend/src/components/admin/ReservationManager.tsx",
         "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
@@ -18,6 +18,46 @@
       ],
       "testIds": [
         "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-optimize-the-ticket-acceptance-flow-in-the-reservationmanager-to-reduce-perceived-latency-apply-optimistic-ui-updates-so-the-reservation-status-changes-immediately-on-click-with-a-rollback-if-the-backend-call-fails-show-a-loading-indicator-on-the-action-button-that-was-clicked-to-prevent-duplicate-submissions",
+      "featureTitle": "Optimize the ticket acceptance flow in the ReservationManager to reduce perceived latency. Apply optimistic UI updates so the reservation status changes immediately on click, with a rollback if the backend call fails. Show a loading indicator on the action button that was clicked to prevent duplicate submissions.",
+      "files": [
+        "frontend/src/components/admin/ReservationManager.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-after-an-admin-blocks-a-user-trigger-a-backend-side-cleanup-that-also-invalidates-and-refetches-the-reservation-list-and-seat-plan-on-the-frontend-so-the-admin-immediately-sees-blocked-users-bookings-disappear-from-the-ui",
+      "featureTitle": "After an admin blocks a user, trigger a backend-side cleanup that also invalidates and refetches the reservation list and seat plan on the frontend, so the admin immediately sees blocked users' bookings disappear from the UI.",
+      "files": [
+        "frontend/src/components/admin/ReservationManager.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

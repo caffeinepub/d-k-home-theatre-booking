@@ -1,56 +1,96 @@
 {
   "kind": "build_request",
-  "title": "Grant admin role to current user",
-  "projectName": "D.K Home Theatre",
-  "priority": "normal",
+  "title": "Fix reservation/booking bugs: blocked user removal, post-action UI refresh, and faster ticket acceptance",
+  "projectName": "D.K Home Theatre Booking",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a backend function that allows a bootstrapped super-admin principal (hardcoded or set on first call when no admin exists) to grant the admin role to a given principal. On canister initialization, automatically assign the admin role to the deployer's principal so the first user can self-promote.",
+      "text": "When an admin blocks a user, automatically cancel and remove all existing reservations and bookings made by that blocked user across all screenings. The backend must enforce this so that blocked users have no active reservations after being blocked.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-latest"
         ],
         "quotes": [
-          "Make me admin of this"
+          "fix the problem of not removing booking of people I have block"
         ]
       },
       "acceptanceCriteria": [
-        "A 'setAdmin' or equivalent function exists that can assign admin role to a principal",
-        "On first deploy (no existing admins), the canister deployer principal is automatically set as admin",
-        "Calling 'isAdmin' with the deployer's principal returns true after initialization"
+        "When a user is blocked by an admin, all their pending and confirmed reservations are cancelled in the backend data store.",
+        "Blocked users' seats are freed up and marked available again on the seat plan.",
+        "If a user is already blocked and attempts to make a new reservation, the backend rejects the request with an appropriate error."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add an admin self-promotion UI flow: when a logged-in Internet Identity user visits the Admin page and is not yet an admin, display a 'Claim Admin Access' button that calls the backend to grant them admin privileges (only succeeds if no admin exists yet or they are already an admin). After a successful claim, refresh the admin status and grant access to the AdminPanel.",
+      "text": "After an admin accepts or denies a ticket/reservation in the ReservationManager UI, immediately refresh the reservation list and seat plan data without requiring a manual page reload. Invalidate and refetch all relevant React Query caches (reservations, seat plan) upon mutation success or failure.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-3"
+          "msg-latest"
         ],
         "quotes": [
-          "Make me admin of this"
+          "fix the changes after the acceptance or denial of the ticket I have made",
+          "UI/state does not update correctly after ticket acceptance or denial"
         ]
       },
       "acceptanceCriteria": [
-        "A 'Claim Admin Access' button is shown to authenticated users who are not yet admins on the Admin page",
-        "Clicking the button calls the backend grant-admin function",
-        "On success, the user is immediately granted access to the AdminPanel without a page reload",
-        "If the claim fails (e.g., admin slot already taken), an informative error toast is shown",
-        "AdminGuard correctly reflects the new admin status after claiming"
+        "After confirming a reservation, the reservation list in ReservationManager updates instantly to reflect the new status without a page reload.",
+        "After cancelling/denying a reservation, the reservation list updates instantly to remove or update that entry.",
+        "The seat map reflects updated seat statuses immediately after any reservation action.",
+        "No stale data is shown after accept/deny actions."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Optimize the ticket acceptance flow in the ReservationManager to reduce perceived latency. Apply optimistic UI updates so the reservation status changes immediately on click, with a rollback if the backend call fails. Show a loading indicator on the action button that was clicked to prevent duplicate submissions.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "Make the acceptance of ticket quick"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking 'Confirm' or 'Cancel' on a reservation immediately updates the UI optimistically before the backend responds.",
+        "If the backend call fails, the UI rolls back to the previous state and shows an error toast.",
+        "The action buttons show a loading/spinner state while the mutation is in-flight.",
+        "Users cannot click the same action button multiple times while it is loading."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "After an admin blocks a user, trigger a backend-side cleanup that also invalidates and refetches the reservation list and seat plan on the frontend, so the admin immediately sees blocked users' bookings disappear from the UI.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-latest"
+        ],
+        "quotes": [
+          "fix the problem of not removing booking of people I have block",
+          "fix the changes after the acceptance or denial of the ticket"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After blocking a user, the ReservationManager no longer shows that user's reservations.",
+        "Seats previously held by the blocked user revert to available status on the seat map.",
+        "The frontend React Query cache is invalidated for reservations and seat plans after a block action."
       ]
     }
   ],
   "constraints": [
-    "Do not modify frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or any files under frontend/src/components/ui",
-    "Keep all Motoko logic in backend/main.mo (single-actor architecture)"
+    "All Motoko logic must remain in the single backend/main.mo actor file.",
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "Preserve the existing dark cinematic theme and layout of the admin panel."
   ],
   "nonGoals": [
-    "Multi-admin management UI (add/remove multiple admins)",
-    "Role-based permission tiers beyond the existing admin/user distinction",
-    "Any changes to the booking flow or other existing features"
+    "Redesigning the admin panel layout or visual theme.",
+    "Adding new user roles beyond the existing admin/user system.",
+    "Changes to the food menu or bill receipt flow.",
+    "Real-time WebSocket-based live updates."
   ],
   "imageRequirements": {
     "required": [],

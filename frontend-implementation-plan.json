@@ -1,28 +1,75 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Grant admin role to current user",
+  "title": "Fix reservation/booking bugs: UI refresh and faster ticket acceptance",
   "requirements": [
     {
       "id": "REQ-2",
-      "summary": "Add an admin self-promotion UI flow allowing authenticated users to claim admin access when no admin exists yet",
+      "summary": "After an admin accepts or denies a ticket/reservation in the ReservationManager UI, immediately refresh the reservation list and seat plan data without requiring a manual page reload",
       "acceptanceCriteria": [
-        "A 'Claim Admin Access' button is shown to authenticated users who are not yet admins on the Admin page",
-        "Clicking the button calls the backend grant-admin function",
-        "On success, the user is immediately granted access to the AdminPanel without a page reload",
-        "If the claim fails (e.g., admin slot already taken), an informative error toast is shown",
-        "AdminGuard correctly reflects the new admin status after claiming"
+        "After confirming a reservation, the reservation list in ReservationManager updates instantly to reflect the new status without a page reload.",
+        "After cancelling/denying a reservation, the reservation list updates instantly to remove or update that entry.",
+        "The seat map reflects updated seat statuses immediately after any reservation action.",
+        "No stale data is shown after accept/deny actions."
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a React Query mutation hook useGrantAdminRole that wraps the backend grantAdminRole function. The mutation should accept a Principal parameter and call actor.grantAdminRole(candidate). On success, invalidate the 'isCallerAdmin' and 'callerUserRole' query keys to trigger a refresh of the admin status throughout the app."
+          "description": "Update the useConfirmReservation and useCancelReservation mutation hooks to invalidate both 'reservations' and 'seatPlan' query caches on success and failure. Ensure that after a mutation completes, React Query refetches all affected data (reservations for all screenings, seat plan for the current screening) so the UI reflects the latest backend state immediately."
         },
         {
-          "path": "frontend/src/components/admin/AdminGuard.tsx",
+          "path": "frontend/src/components/admin/ReservationManager.tsx",
           "operation": "modify",
-          "description": "Extend AdminGuard to display a 'Claim Admin Access' button when the user is authenticated but isAdmin returns false. Use the authorization component's pattern for self-promotion: render a centered card with explanatory text ('No admin exists yet. Claim admin access to manage this application.') and a primary button. On button click, invoke the useGrantAdminRole mutation with the current user's principal. Show a loading state while the mutation is pending. On success, the invalidated queries will automatically re-fetch and grant access to children. On error, display a toast with the error message (e.g., 'Admin access already claimed by another user')."
+          "description": "Ensure the component re-renders when the underlying reservations query data changes after cache invalidation. Verify that the reservation list displays updated statuses and that cancelled reservations are removed or marked accordingly without requiring a manual page refresh."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Optimize the ticket acceptance flow in the ReservationManager to reduce perceived latency using optimistic UI updates and loading indicators",
+      "acceptanceCriteria": [
+        "Clicking 'Confirm' or 'Cancel' on a reservation immediately updates the UI optimistically before the backend responds.",
+        "If the backend call fails, the UI rolls back to the previous state and shows an error toast.",
+        "The action buttons show a loading/spinner state while the mutation is in-flight.",
+        "Users cannot click the same action button multiple times while it is loading."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add optimistic updates to useConfirmReservation and useCancelReservation mutations using React Query's onMutate callback. Before the backend call completes, immediately update the 'reservations' query cache to reflect the new reservation status. In onError, roll back the optimistic update to the previous cache state. Keep the existing onSuccess cache invalidation logic."
+        },
+        {
+          "path": "frontend/src/components/admin/ReservationManager.tsx",
+          "operation": "modify",
+          "description": "Add loading state indicators to the Confirm and Cancel action buttons by accessing the mutation's isPending state from the hooks. Disable buttons while their respective mutation is in-flight to prevent duplicate submissions. Show a spinner icon or loading text on the active button. Ensure error toasts are displayed if the backend call fails and the optimistic update is rolled back."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "After an admin blocks a user, trigger frontend cache invalidation so the admin immediately sees blocked users' bookings disappear from the UI",
+      "acceptanceCriteria": [
+        "After blocking a user, the ReservationManager no longer shows that user's reservations.",
+        "Seats previously held by the blocked user revert to available status on the seat map.",
+        "The frontend React Query cache is invalidated for reservations and seat plans after a block action."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add or update the useBlockUser mutation hook to invalidate both 'reservations' and 'seatPlan' query caches on success. This ensures that after a user is blocked, the frontend refetches all reservation and seat plan data, removing the blocked user's bookings from the UI and freeing their seats on the seat map."
+        },
+        {
+          "path": "frontend/src/components/admin/ReservationManager.tsx",
+          "operation": "modify",
+          "description": "Verify that after the useBlockUser mutation completes and caches are invalidated, the reservation list updates to exclude any reservations made by the blocked user. The component should automatically re-render with the refetched data showing no entries for the blocked user."
+        },
+        {
+          "path": "frontend/src/components/admin/SeatPlanEditor.tsx",
+          "operation": "modify",
+          "description": "Ensure that after a user is blocked and the seatPlan cache is invalidated, the seat plan editor refetches and displays updated seat statuses. Seats previously held by the blocked user should now show as available, reflecting the backend cleanup automatically without requiring a page reload."
         }
       ]
     }

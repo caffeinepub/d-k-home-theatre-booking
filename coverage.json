@@ -1,33 +1,60 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-28T06:51:54.878Z",
+  "generatedAt": "2026-02-28T13:01:13.727Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 1,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a backend function that allows a bootstrapped super-admin principal (hardcoded or set on first call when no admin exists) to grant the admin role to a given principal. On canister initialization, automatically assign the admin role to the deployer's principal so the first user can self-promote.",
+        "summary": "When an admin blocks a user, automatically cancel and remove all existing reservations and bookings made by that blocked user across all screenings. The backend must enforce this so that blocked users have no active reservations after being blocked.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Add an admin self-promotion UI flow: when a logged-in Internet Identity user visits the Admin page and is not yet an admin, display a 'Claim Admin Access' button that calls the backend to grant them admin privileges (only succeeds if no admin exists yet or they are already an admin). After a successful claim, refresh the admin status and grant access to the AdminPanel.",
+        "summary": "After an admin accepts or denies a ticket/reservation in the ReservationManager UI, immediately refresh the reservation list and seat plan data without requiring a manual page reload. Invalidate and refetch all relevant React Query caches (reservations, seat plan) upon mutation success or failure.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/admin/AdminGuard.tsx"
+          "frontend/src/components/admin/ReservationManager.tsx"
         ],
         "matchedFiles": [
           "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/admin/AdminGuard.tsx"
+          "frontend/src/components/admin/ReservationManager.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Optimize the ticket acceptance flow in the ReservationManager to reduce perceived latency. Apply optimistic UI updates so the reservation status changes immediately on click, with a rollback if the backend call fails. Show a loading indicator on the action button that was clicked to prevent duplicate submissions.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/admin/ReservationManager.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/admin/ReservationManager.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "After an admin blocks a user, trigger a backend-side cleanup that also invalidates and refetches the reservation list and seat plan on the frontend, so the admin immediately sees blocked users' bookings disappear from the UI.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/admin/ReservationManager.tsx",
+          "frontend/src/components/admin/SeatPlanEditor.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/admin/ReservationManager.tsx"
         ]
       }
     ]
@@ -41,7 +68,7 @@
     "frontend-implementation-plan.json",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
-    "frontend/src/components/admin/AdminGuard.tsx",
+    "frontend/src/components/admin/ReservationManager.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
     "frontend/src/hooks/useQueries.ts",

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useGetSeatPlan } from '../hooks/useQueries';
 import { type Seat, SeatStatus } from '../backend';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,7 +19,7 @@ function toIconStatus(status: SeatStatus, isSelected: boolean): SeatIconStatus {
   return 'available';
 }
 
-export default function SeatMap({ screeningId, selectedSeatIds, onToggleSeat, readOnly = false }: SeatMapProps) {
+const SeatMap = memo(function SeatMap({ screeningId, selectedSeatIds, onToggleSeat, readOnly = false }: SeatMapProps) {
   const { data: seatPlanEntries, isLoading, error } = useGetSeatPlan(screeningId);
 
   const rows = useMemo(() => {
@@ -91,81 +91,53 @@ export default function SeatMap({ screeningId, selectedSeatIds, onToggleSeat, re
           alt=""
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover opacity-20"
+          loading="lazy"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
 
-        <div className="relative z-10 px-4 py-6">
+        <div className="relative z-10 p-6">
           {/* Screen */}
-          <div className="flex flex-col items-center mb-8">
+          <div className="mb-8 text-center">
             <div
-              className="screen-glow rounded-sm mb-2"
+              className="mx-auto rounded-sm"
               style={{
                 width: '70%',
-                maxWidth: '500px',
-                height: '10px',
-                background: 'linear-gradient(90deg, transparent 0%, oklch(0.85 0.15 200) 20%, oklch(0.95 0.1 200) 50%, oklch(0.85 0.15 200) 80%, transparent 100%)',
-                borderRadius: '50% 50% 0 0 / 100% 100% 0 0',
-              }}
-            />
-            <div
-              className="flex items-center justify-center rounded-sm"
-              style={{
-                width: '65%',
-                maxWidth: '480px',
                 height: '6px',
-                background: 'linear-gradient(90deg, transparent, oklch(0.78 0.18 200 / 0.6), transparent)',
+                background: 'linear-gradient(90deg, transparent, oklch(0.85 0.15 85 / 0.8), transparent)',
+                boxShadow: '0 0 30px oklch(0.85 0.15 85 / 0.5), 0 0 60px oklch(0.85 0.15 85 / 0.2)',
               }}
             />
-            <span
-              className="mt-2 text-xs tracking-[0.4em] uppercase font-bold"
-              style={{ color: 'oklch(0.78 0.18 200 / 0.8)' }}
-            >
-              ◀ SCREEN ▶
-            </span>
+            <p className="text-xs text-muted-foreground mt-2 tracking-widest uppercase opacity-60">Screen</p>
           </div>
 
           {/* Seat rows */}
-          <div className="space-y-2 overflow-x-auto pb-2">
-            {sortedRows.map((row) => {
-              const seats = rows.get(row) || [];
+          <div className="space-y-2">
+            {sortedRows.map((rowLabel) => {
+              const seats = rows.get(rowLabel) || [];
               return (
-                <div key={row} className="flex items-center gap-2 justify-center min-w-max mx-auto">
-                  {/* Row label left */}
+                <div key={rowLabel} className="flex items-center gap-2 justify-center">
                   <span
-                    className="text-xs font-bold w-6 text-right flex-shrink-0"
-                    style={{ color: 'oklch(0.78 0.12 85 / 0.8)', fontFamily: 'monospace' }}
+                    className="text-xs font-bold w-5 text-center flex-shrink-0"
+                    style={{ color: 'oklch(0.65 0.12 85 / 0.7)' }}
                   >
-                    {row}
+                    {rowLabel}
                   </span>
-
-                  {/* Seats */}
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-1 flex-wrap justify-center">
                     {seats.map((seat) => {
                       const isSelected = selectedSeatIds.includes(seat.id);
                       const iconStatus = toIconStatus(seat.status, isSelected);
+                      const canClick = !readOnly && seat.status === SeatStatus.available;
                       return (
                         <SeatIcon
                           key={seat.id}
                           seatLabel={`${seat.row}${Number(seat.number)}`}
                           status={iconStatus}
                           size={seatSize}
-                          onClick={
-                            !readOnly && seat.status === SeatStatus.available
-                              ? () => onToggleSeat(seat.id)
-                              : undefined
-                          }
+                          onClick={canClick ? () => onToggleSeat(seat.id) : undefined}
                         />
                       );
                     })}
                   </div>
-
-                  {/* Row label right */}
-                  <span
-                    className="text-xs font-bold w-6 flex-shrink-0"
-                    style={{ color: 'oklch(0.78 0.12 85 / 0.8)', fontFamily: 'monospace' }}
-                  >
-                    {row}
-                  </span>
                 </div>
               );
             })}
@@ -174,27 +146,26 @@ export default function SeatMap({ screeningId, selectedSeatIds, onToggleSeat, re
       </div>
 
       {/* Legend */}
-      <div
-        className="flex flex-wrap items-center justify-center gap-4 text-xs py-3 px-4 rounded-xl"
-        style={{ background: 'oklch(0.12 0 0)', border: '1px solid oklch(0.22 0.02 85 / 0.4)' }}
-      >
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded cinema-seat-available" style={{ border: '1.5px solid oklch(0.65 0.22 145)' }} />
-          <span className="text-muted-foreground">Available ({availableCount})</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded cinema-seat-selected" />
-          <span className="text-muted-foreground">Selected ({selectedSeatIds.length})</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded cinema-seat-reserved" />
-          <span className="text-muted-foreground">Reserved</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded cinema-seat-booked" />
-          <span className="text-muted-foreground">Booked</span>
-        </div>
+      <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm cinema-seat cinema-seat-available inline-block" style={{ position: 'relative', display: 'inline-block' }} />
+          Available ({availableCount})
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm cinema-seat cinema-seat-selected inline-block" style={{ position: 'relative', display: 'inline-block' }} />
+          Selected ({selectedSeatIds.length})
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm cinema-seat cinema-seat-reserved inline-block" style={{ position: 'relative', display: 'inline-block' }} />
+          Reserved
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-4 h-4 rounded-sm cinema-seat cinema-seat-booked inline-block" style={{ position: 'relative', display: 'inline-block' }} />
+          Booked
+        </span>
       </div>
     </div>
   );
-}
+});
+
+export default SeatMap;

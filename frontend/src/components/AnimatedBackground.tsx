@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 
 const LETTERS = [
   '🎬', '🍿', '🎭', '⭐', '🎪', '🎠', '🌟', '🎡',
@@ -7,15 +7,20 @@ const LETTERS = [
   '🎟', '🎥', '🎦', '🎶', '🎵', '🎸', '🎺', '🎻',
 ];
 
+// Vibrant cinematic multi-color palette
 const CANDY_COLORS = [
+  'oklch(0.65 0.28 300)',  // deep violet
+  'oklch(0.55 0.30 290)',  // electric purple
+  'oklch(0.72 0.25 195)',  // electric teal
+  'oklch(0.65 0.22 200)',  // deep cyan
+  'oklch(0.58 0.26 25)',   // vivid crimson
+  'oklch(0.65 0.28 15)',   // hot red
+  'oklch(0.78 0.20 75)',   // warm amber
+  'oklch(0.72 0.22 60)',   // golden orange
+  'oklch(0.55 0.28 250)',  // midnight blue
+  'oklch(0.62 0.25 260)',  // cobalt blue
   'oklch(0.72 0.28 350)',  // hot pink
-  'oklch(0.82 0.25 140)',  // lime green
-  'oklch(0.75 0.22 55)',   // orange
-  'oklch(0.78 0.18 200)',  // cyan
-  'oklch(0.88 0.22 95)',   // yellow
-  'oklch(0.65 0.25 300)',  // purple
-  'oklch(0.65 0.25 25)',   // red
-  'oklch(0.78 0.12 85)',   // gold
+  'oklch(0.82 0.22 140)',  // lime green
 ];
 
 const ANIMATIONS = [
@@ -48,10 +53,10 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-export default function AnimatedBackground() {
+const AnimatedBackground = memo(function AnimatedBackground() {
   const letters = useMemo<LetterConfig[]>(() => {
     const rand = seededRandom(42);
-    return Array.from({ length: 40 }, (_, i) => ({
+    return Array.from({ length: 48 }, (_, i) => ({
       id: i,
       char: LETTERS[Math.floor(rand() * LETTERS.length)],
       color: CANDY_COLORS[Math.floor(rand() * CANDY_COLORS.length)],
@@ -71,6 +76,40 @@ export default function AnimatedBackground() {
       aria-hidden="true"
       style={{ zIndex: 0 }}
     >
+      {/* Multi-color radial glow blobs */}
+      <div
+        className="absolute"
+        style={{
+          top: '10%', left: '5%', width: '35%', height: '40%',
+          background: 'radial-gradient(ellipse, oklch(0.55 0.30 290 / 0.12) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+        }}
+      />
+      <div
+        className="absolute"
+        style={{
+          top: '50%', right: '5%', width: '30%', height: '35%',
+          background: 'radial-gradient(ellipse, oklch(0.65 0.22 200 / 0.12) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+        }}
+      />
+      <div
+        className="absolute"
+        style={{
+          bottom: '10%', left: '30%', width: '40%', height: '30%',
+          background: 'radial-gradient(ellipse, oklch(0.58 0.26 25 / 0.10) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+        }}
+      />
+      <div
+        className="absolute"
+        style={{
+          top: '30%', left: '50%', width: '25%', height: '30%',
+          background: 'radial-gradient(ellipse, oklch(0.78 0.20 75 / 0.10) 0%, transparent 70%)',
+          filter: 'blur(40px)',
+        }}
+      />
+
       {letters.map((letter) => (
         <span
           key={letter.id}
@@ -89,4 +128,6 @@ export default function AnimatedBackground() {
       ))}
     </div>
   );
-}
+});
+
+export default AnimatedBackground;

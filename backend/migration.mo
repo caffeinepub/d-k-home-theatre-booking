@@ -1,14 +1,11 @@
 import Map "mo:core/Map";
 import Principal "mo:core/Principal";
-import Time "mo:core/Time";
 
 module {
-  public type ScreeningId = Text;
-  public type SeatId = Text;
   public type Screening = {
-    id : ScreeningId;
+    id : Text;
     title : Text;
-    date : Time.Time;
+    date : Int;
     time : Text;
     description : Text;
     posterImages : [Text];
@@ -16,25 +13,35 @@ module {
   };
 
   public type Seat = {
-    id : SeatId;
+    id : Text;
     row : Text;
     number : Nat;
     status : SeatStatus;
-  };
-
-  public type Seats = Map.Map<SeatId, Seat>;
-  public type Reservation = {
-    customerName : Text;
-    contactInfo : Text;
-    screeningId : ScreeningId;
-    seatIds : [SeatId];
-    status : ReservationStatus;
   };
 
   public type SeatStatus = {
     #available;
     #reserved;
     #booked;
+  };
+
+  // Old reservation type without userId field
+  public type OldReservation = {
+    customerName : Text;
+    contactInfo : Text;
+    screeningId : Text;
+    seatIds : [Text];
+    status : ReservationStatus;
+  };
+
+  // New reservation type with optional userId field
+  public type Reservation = {
+    customerName : Text;
+    contactInfo : Text;
+    screeningId : Text;
+    seatIds : [Text];
+    status : ReservationStatus;
+    userId : ?Principal;
   };
 
   public type ReservationStatus = {
@@ -48,17 +55,41 @@ module {
     contactInfo : Text;
   };
 
-  // Actor state shape — matches the stable fields of the actor
-  public type ActorState = {
-    screenings : Map.Map<ScreeningId, Screening>;
-    seatPlans : Map.Map<ScreeningId, Seats>;
+  public type OldActor = {
+    screenings : Map.Map<Text, Screening>;
+    seatPlans : Map.Map<Text, Map.Map<Text, Seat>>;
+    reservations : Map.Map<Text, OldReservation>;
+    userProfiles : Map.Map<Principal, UserProfile>;
+  };
+
+  public type NewActor = {
+    screenings : Map.Map<Text, Screening>;
+    seatPlans : Map.Map<Text, Map.Map<Text, Seat>>;
     reservations : Map.Map<Text, Reservation>;
     userProfiles : Map.Map<Principal, UserProfile>;
   };
 
-  // Migration function: identity migration — no structural changes needed
-  // since the superAdmin_ variable has been removed from the actor.
-  public func run(old : ActorState) : ActorState {
-    old;
+  public func run(old : OldActor) : NewActor {
+    // Migrate reservations: add userId = null for all existing reservations
+    // since we don't know which principal made them previously.
+    let migratedReservations = old.reservations.map<Text, OldReservation, Reservation>(
+      func(_id, r) : Reservation {
+        {
+          customerName = r.customerName;
+          contactInfo = r.contactInfo;
+          screeningId = r.screeningId;
+          seatIds = r.seatIds;
+          status = r.status;
+          userId = null;
+        };
+      }
+    );
+
+    {
+      screenings = old.screenings;
+      seatPlans = old.seatPlans;
+      reservations = migratedReservations;
+      userProfiles = old.userProfiles;
+    };
   };
 };

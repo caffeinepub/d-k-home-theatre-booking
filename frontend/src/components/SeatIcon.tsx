@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 export type SeatStatus = 'available' | 'reserved' | 'booked' | 'selected';
 
@@ -9,7 +9,7 @@ interface SeatIconProps {
   size?: number;
 }
 
-export default function SeatIcon({ seatLabel, status, onClick, size = 38 }: SeatIconProps) {
+function SeatIconComponent({ seatLabel, status, onClick, size = 38 }: SeatIconProps) {
   const isDisabled = status === 'reserved' || status === 'booked';
 
   const classMap: Record<SeatStatus, string> = {
@@ -61,3 +61,15 @@ export default function SeatIcon({ seatLabel, status, onClick, size = 38 }: Seat
     </button>
   );
 }
+
+// Custom comparison: only re-render when status, label, or size changes
+const SeatIcon = memo(SeatIconComponent, (prev, next) => {
+  return (
+    prev.status === next.status &&
+    prev.seatLabel === next.seatLabel &&
+    prev.size === next.size &&
+    prev.onClick === next.onClick
+  );
+});
+
+export default SeatIcon;
